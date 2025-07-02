@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 
 // User type definition
 export interface User {
@@ -59,14 +59,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // In a real app, you would call your API here
       // For now, we'll simulate a successful login
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+
       const mockUser: User = {
         id: '1',
         email,
         name: 'John Doe',
         role: 'user',
       };
-      
+
       setUser(mockUser);
       localStorage.setItem('auth_token', 'mock_token_123');
     } catch (error) {
@@ -81,14 +81,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // In a real app, you would call your API here
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+
       const mockUser: User = {
         id: '1',
         email,
         name,
         role: 'user',
       };
-      
+
       setUser(mockUser);
       localStorage.setItem('auth_token', 'mock_token_123');
     } catch (error) {

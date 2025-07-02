@@ -42,19 +42,19 @@ const URLForm: React.FC<URLFormProps> = ({
       title: data.title,
       description: data.description || undefined,
     });
-    
+
     if (!initialData) {
       reset(); // Only reset if it's a new form (not editing)
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-6'>
       <div>
-        <label htmlFor="url" className="block text-sm font-medium text-gray-700">
+        <label htmlFor='url' className='block text-sm font-medium text-gray-700'>
           URL *
         </label>
-        <div className="mt-1">
+        <div className='mt-1'>
           <input
             {...register('url', {
               required: 'URL is required',
@@ -63,22 +63,20 @@ const URLForm: React.FC<URLFormProps> = ({
                 message: 'Please enter a valid URL starting with http:// or https://',
               },
             })}
-            type="url"
-            id="url"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            placeholder="https://example.com"
+            type='url'
+            id='url'
+            className='block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'
+            placeholder='https://example.com'
           />
-          {errors.url && (
-            <p className="mt-2 text-sm text-red-600">{errors.url.message}</p>
-          )}
+          {errors.url && <p className='mt-2 text-sm text-red-600'>{errors.url.message}</p>}
         </div>
       </div>
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor='title' className='block text-sm font-medium text-gray-700'>
           Title *
         </label>
-        <div className="mt-1">
+        <div className='mt-1'>
           <input
             {...register('title', {
               required: 'Title is required',
@@ -91,22 +89,20 @@ const URLForm: React.FC<URLFormProps> = ({
                 message: 'Title must be less than 100 characters',
               },
             })}
-            type="text"
-            id="title"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            placeholder="Website name or title"
+            type='text'
+            id='title'
+            className='block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'
+            placeholder='Website name or title'
           />
-          {errors.title && (
-            <p className="mt-2 text-sm text-red-600">{errors.title.message}</p>
-          )}
+          {errors.title && <p className='mt-2 text-sm text-red-600'>{errors.title.message}</p>}
         </div>
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor='description' className='block text-sm font-medium text-gray-700'>
           Description
         </label>
-        <div className="mt-1">
+        <div className='mt-1'>
           <textarea
             {...register('description', {
               maxLength: {
@@ -114,31 +110,22 @@ const URLForm: React.FC<URLFormProps> = ({
                 message: 'Description must be less than 500 characters',
               },
             })}
-            id="description"
+            id='description'
             rows={3}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            placeholder="Optional description of the website"
+            className='block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'
+            placeholder='Optional description of the website'
           />
           {errors.description && (
-            <p className="mt-2 text-sm text-red-600">{errors.description.message}</p>
+            <p className='mt-2 text-sm text-red-600'>{errors.description.message}</p>
           )}
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => reset()}
-          disabled={loading}
-        >
+      <div className='flex justify-end space-x-3'>
+        <Button type='button' variant='outline' onClick={() => reset()} disabled={loading}>
           Reset
         </Button>
-        <Button
-          type="submit"
-          loading={loading}
-          disabled={!isValid || loading}
-        >
+        <Button type='submit' loading={loading} disabled={!isValid || loading}>
           {submitText}
         </Button>
       </div>

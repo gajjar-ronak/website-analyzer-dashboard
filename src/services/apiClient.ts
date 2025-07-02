@@ -39,12 +39,9 @@ class ApiClient {
     };
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -74,18 +71,18 @@ class ApiClient {
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof ApiError) {
         throw error;
       }
-      
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           throw new ApiError('Request timeout', 408, 'Request Timeout');
         }
         throw new ApiError(error.message, 0, 'Network Error');
       }
-      
+
       throw new ApiError('Unknown error occurred', 0, 'Unknown Error');
     }
   }
@@ -99,7 +96,7 @@ class ApiClient {
         }
       });
     }
-    
+
     return this.request<T>(url.pathname + url.search);
   }
 
