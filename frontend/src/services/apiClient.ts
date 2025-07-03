@@ -29,6 +29,8 @@ class ApiClient {
   private baseURL: string;
   private timeout: number;
   private defaultHeaders: Record<string, string>;
+  private requestInterceptors: Array<(config: RequestInit) => RequestInit> = [];
+  private responseInterceptors: Array<(response: any) => any> = [];
 
   constructor(config: ApiClientConfig) {
     this.baseURL = config.baseURL;
@@ -37,21 +39,73 @@ class ApiClient {
       'Content-Type': 'application/json',
       ...config.headers,
     };
+
+    // Set up default interceptors
+    this.setupDefaultInterceptors();
+  }
+
+  /**
+   * Set up default request and response interceptors
+   */
+  private setupDefaultInterceptors(): void {
+    // Request interceptor for logging
+    this.addRequestInterceptor(config => {
+      if (import.meta.env.DEV) {
+        console.log('🚀 API Request:', {
+          url: config.url || 'Unknown',
+          method: config.method || 'GET',
+          headers: config.headers,
+        });
+      }
+      return config;
+    });
+
+    // Response interceptor for logging and error handling
+    this.addResponseInterceptor(response => {
+      if (import.meta.env.DEV) {
+        console.log('✅ API Response:', response);
+      }
+      return response;
+    });
+  }
+
+  /**
+   * Add a request interceptor
+   */
+  addRequestInterceptor(interceptor: (config: RequestInit) => RequestInit): void {
+    this.requestInterceptors.push(interceptor);
+  }
+
+  /**
+   * Add a response interceptor
+   */
+  addResponseInterceptor(interceptor: (response: any) => any): void {
+    this.responseInterceptors.push(interceptor);
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
+
+    // Apply request interceptors
+    let requestConfig: RequestInit = {
+      ...options,
+      url,
+      headers: {
+        ...this.defaultHeaders,
+        ...options.headers,
+      },
+    };
+
+    for (const interceptor of this.requestInterceptors) {
+      requestConfig = interceptor(requestConfig);
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
       const response = await fetch(url, {
-        ...options,
-        headers: {
-          ...this.defaultHeaders,
-          ...options.headers,
-        },
+        ...requestConfig,
         signal: controller.signal,
       });
 
@@ -59,15 +113,29 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
+        // Handle authentication errors
+        if (response.status === 401) {
+          // Clear stored token on unauthorized
+          localStorage.removeItem('api_token');
+          this.removeHeader('Authorization');
+        }
+
         throw new ApiError(
-          errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           response.statusText,
           errorData
         );
       }
 
-      const data = await response.json();
+      let data = await response.json();
+
+      // Apply response interceptors
+      for (const interceptor of this.responseInterceptors) {
+        data = interceptor(data);
+      }
+
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
@@ -135,11 +203,33 @@ class ApiClient {
   removeHeader(key: string): void {
     delete this.defaultHeaders[key];
   }
+
+  /**
+   * Set authentication token
+   */
+  setAuthToken(token: string): void {
+    this.setHeader('Authorization', `Bearer ${token}`);
+    localStorage.setItem('api_token', token);
+  }
+
+  /**
+   * Clear authentication token
+   */
+  clearAuthToken(): void {
+    this.removeHeader('Authorization');
+    localStorage.removeItem('api_token');
+  }
 }
 
 // Create and export the default API client instance
 export const apiClient = new ApiClient({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
 });
+
+// Set up authentication token if available
+const token = localStorage.getItem('api_token') || import.meta.env.VITE_API_TOKEN;
+if (token) {
+  apiClient.setHeader('Authorization', `Bearer ${token}`);
+}
 
 export default apiClient;
