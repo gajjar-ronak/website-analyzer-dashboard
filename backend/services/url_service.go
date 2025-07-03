@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"website-analyzer-backend/database"
@@ -34,6 +35,7 @@ func (s *URLService) CreateURL(req models.URLCreateRequest) (*models.URL, error)
 	// Create new URL record
 	url := models.URL{
 		URL:       req.URL,
+		Title:     req.Title,
 		Status:    "pending",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -59,21 +61,41 @@ func (s *URLService) GetURLByID(id uint) (*models.URL, error) {
 	return &url, nil
 }
 
-// GetAllURLs retrieves all URLs with pagination
-func (s *URLService) GetAllURLs(page, limit int) ([]models.URL, int64, error) {
+// URLFilters represents filters for URL queries
+type URLFilters struct {
+	Search string
+	Status string
+}
+
+// GetAllURLs retrieves all URLs with pagination, search, and filtering
+func (s *URLService) GetAllURLs(page, limit int, filters URLFilters) ([]models.URL, int64, error) {
 	var urls []models.URL
 	var total int64
 
-	// Count total records
-	if err := s.db.Model(&models.URL{}).Count(&total).Error; err != nil {
+	// Build query with filters
+	query := s.db.Model(&models.URL{})
+
+	// Apply search filter
+	if filters.Search != "" {
+		searchTerm := "%" + filters.Search + "%"
+		query = query.Where("url LIKE ? OR title LIKE ? OR description LIKE ?", searchTerm, searchTerm, searchTerm)
+	}
+
+	// Apply status filter
+	if filters.Status != "" && filters.Status != "all" {
+		query = query.Where("status = ?", filters.Status)
+	}
+
+	// Count total records with filters
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to count URLs: %w", err)
 	}
 
 	// Calculate offset
 	offset := (page - 1) * limit
 
-	// Get paginated results
-	if err := s.db.Offset(offset).Limit(limit).Order("created_at DESC").Find(&urls).Error; err != nil {
+	// Get paginated results with filters
+	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&urls).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to get URLs: %w", err)
 	}
 
@@ -153,27 +175,44 @@ func (s *URLService) AnalyzeURL(id uint) error {
 	return nil
 }
 
-// performAnalysis simulates URL analysis (placeholder implementation)
+// performAnalysis performs basic URL analysis (simplified implementation)
 func (s *URLService) performAnalysis(id uint) {
-	// Simulate analysis time
-	time.Sleep(2 * time.Second)
-
-	// Update with mock analysis results
-	updates := map[string]interface{}{
-		"status":           "completed",
-		"status_code":      200,
-		"title":           "Sample Website Title",
-		"meta_title":      "Sample Meta Title",
-		"meta_description": "Sample meta description for the website",
-		"h1_tags":         "Main Heading",
-		"h2_tags":         "Subheading 1, Subheading 2",
-		"image_count":     5,
-		"link_count":      10,
-		"load_time":       1.25,
-		"page_size":       1024000,
-		"analyzed_at":     time.Now(),
-		"updated_at":      time.Now(),
+	// Get the URL record
+	var url models.URL
+	if err := s.db.First(&url, id).Error; err != nil {
+		// Mark as failed if URL not found
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": "URL record not found",
+			"updated_at":    time.Now(),
+		})
+		return
 	}
 
-	s.db.Model(&models.URL{}).Where("id = ?", id).Updates(updates)
+	// Simulate analysis time (2-5 seconds)
+	time.Sleep(time.Duration(2+rand.Intn(3)) * time.Second)
+
+	// Perform basic analysis (placeholder - in real implementation, you'd fetch and parse the URL)
+	updates := map[string]interface{}{
+		"status":      "completed",
+		"status_code": 200, // In real implementation, get actual HTTP status
+		"analyzed_at": time.Now(),
+		"updated_at":  time.Now(),
+	}
+
+	// In a real implementation, you would:
+	// 1. Make HTTP request to the URL
+	// 2. Parse HTML content
+	// 3. Extract meta tags, headings, etc.
+	// 4. Measure load time and page size
+	// For now, we just mark it as completed without sample data
+
+	if err := s.db.Model(&models.URL{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		// If update fails, mark as failed
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": "Failed to update analysis results",
+			"updated_at":    time.Now(),
+		})
+	}
 }

@@ -27,17 +27,34 @@ export const dashboardApi = {
   },
 
   /**
-   * Get all URLs with pagination
+   * Get all URLs with pagination, search, and filtering
    */
   getURLs: async (params?: {
     page?: number;
     limit?: number;
+    search?: string;
+    status?: string;
   }): Promise<URLsListResponse> => {
-    const queryParams = {
+    const queryParams: Record<string, any> = {
       page: params?.page || 1,
       limit: params?.limit || 10,
     };
-    
+
+    // Add search parameter if provided
+    if (params?.search && params.search.trim()) {
+      queryParams.search = params.search.trim();
+    }
+
+    // Add status filter if provided and not 'all'
+    if (params?.status && params.status !== 'all') {
+      queryParams.status = params.status;
+    }
+
+    // Debug logging in development
+    if (import.meta.env.DEV) {
+      console.log('API Request params:', queryParams);
+    }
+
     return apiClient.get<URLsListResponse>('/urls', queryParams);
   },
 
@@ -49,7 +66,7 @@ export const dashboardApi = {
       page: 1,
       limit: 5,
     });
-    
+
     return response.data;
   },
 
@@ -104,7 +121,7 @@ export const dashboardApi = {
       analyzing_urls: 0,
     };
 
-    urls.forEach((url) => {
+    urls.forEach(url => {
       switch (url.status) {
         case 'completed':
           stats.completed_urls++;
@@ -137,10 +154,10 @@ export const dashboardApi = {
     // Get all URLs to calculate stats and recent URLs
     const urlsResponse = await dashboardApi.getURLs({ page: 1, limit: 100 });
     const allURLs = urlsResponse.data;
-    
+
     // Calculate stats from all URLs
     const stats = dashboardApi.calculateStats(allURLs);
-    
+
     // Get recent URLs (first 5)
     const recentURLs = allURLs.slice(0, 5);
 

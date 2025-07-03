@@ -1,20 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   GlobeAltIcon,
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
 import { useDashboardData } from '../features/dashboard/hooks';
-import { RecentURLs } from '../features/dashboard/components';
+import { RecentURLs, AddURLDialog } from '../features/dashboard/components';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { Button } from '../components/Button';
 
 /**
  * Dashboard component
  * Displays overview statistics and recent URLs with real-time data
  */
 const Dashboard: React.FC = () => {
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { data: dashboardData, isLoading, error } = useDashboardData();
+
+  const handleAddURLSuccess = () => {
+    // Dialog will close automatically, no additional action needed
+    console.log('URL added successfully from dashboard');
+  };
 
   // Prepare stats data from API response
   const stats = React.useMemo(() => {
@@ -149,13 +157,21 @@ const Dashboard: React.FC = () => {
     <ErrorBoundary>
       <div className='space-y-6'>
         {/* Header */}
-        <div>
-          <h1 className='text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight'>
-            Dashboard
-          </h1>
-          <p className='mt-1 text-sm text-gray-500'>
-            Overview of your website analysis and monitoring
-          </p>
+        <div className='md:flex md:items-center md:justify-between'>
+          <div className='min-w-0 flex-1'>
+            <h1 className='text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight'>
+              Dashboard
+            </h1>
+            <p className='mt-1 text-sm text-gray-500'>
+              Overview of your website analysis and monitoring
+            </p>
+          </div>
+          <div className='mt-4 flex md:ml-4 md:mt-0'>
+            <Button onClick={() => setShowAddDialog(true)} className='inline-flex items-center'>
+              <PlusIcon className='mr-2 h-4 w-4' />
+              Add URL
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -185,6 +201,13 @@ const Dashboard: React.FC = () => {
         <ErrorBoundary>
           <RecentURLs urls={dashboardData?.recentURLs || []} />
         </ErrorBoundary>
+
+        {/* Add URL Dialog */}
+        <AddURLDialog
+          isOpen={showAddDialog}
+          onClose={() => setShowAddDialog(false)}
+          onSuccess={handleAddURLSuccess}
+        />
       </div>
     </ErrorBoundary>
   );

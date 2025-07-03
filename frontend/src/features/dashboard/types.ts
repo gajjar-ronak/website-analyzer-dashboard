@@ -14,7 +14,7 @@ export interface DashboardURL {
   description: string;
   status: URLStatus;
   status_code: number;
-  
+
   // SEO Analysis data
   seo_analysis: {
     meta_title: string;
@@ -24,13 +24,13 @@ export interface DashboardURL {
     image_count: number;
     link_count: number;
   };
-  
+
   // Performance data
   performance: {
     load_time: number;
     page_size: number;
   };
-  
+
   // Metadata
   analyzed_at: string | null;
   created_at: string;
@@ -72,6 +72,7 @@ export interface CreateURLResponse {
 // Request payload for creating a URL
 export interface CreateURLRequest {
   url: string;
+  title?: string;
 }
 
 // Request payload for updating a URL

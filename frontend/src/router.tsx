@@ -3,6 +3,7 @@ import SidebarLayout from './layouts/SidebarLayout';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 import URLManagement from './features/urlManagement/pages/URLManagement';
+import URLDetails from './features/dashboard/pages/URLDetails';
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
       {
         path: 'url-management',
         element: <URLManagement />,
+      },
+      {
+        path: 'url-details/:id',
+        element: <URLDetails />,
       },
     ],
   },

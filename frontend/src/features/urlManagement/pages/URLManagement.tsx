@@ -1,37 +1,43 @@
 import React, { useState } from 'react';
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../../components/Button';
-import URLTable from '../components/URLTable';
-import URLForm from '../components/URLForm';
-import { useURLs, useCreateURL, useDeleteURL, useCheckURL } from '../hooks';
-import type { URL, URLListFilters, CreateURLRequest } from '../types';
+import { AddURLDialog, URLTable } from '../../dashboard/components';
+import { useURLsList, useDeleteURL, useAnalyzeURL } from '../../dashboard/hooks';
+import { useDebounce } from '../../../hooks/useDebounce';
+import type { DashboardURL } from '../../dashboard/types';
+
+interface URLFilters {
+  search: string;
+  status: 'all' | 'pending' | 'analyzing' | 'completed' | 'failed';
+  page: number;
+  limit: number;
+}
 
 const URLManagement: React.FC = () => {
-  const [showForm, setShowForm] = useState(false);
-  const [filters, setFilters] = useState<URLListFilters>({
-    status: 'all',
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [filters, setFilters] = useState<URLFilters>({
     search: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+    status: 'all',
+    page: 1,
+    limit: 20,
   });
 
-  // Queries and mutations
-  const { data: urlsData, isLoading } = useURLs(filters);
-  const createURLMutation = useCreateURL();
+  // Debounce search to prevent excessive API calls
+  const debouncedSearch = useDebounce(filters.search, 500);
+
+  // Queries and mutations using dashboard hooks
+  const { data: urlsData, isLoading } = useURLsList({
+    page: filters.page,
+    limit: filters.limit,
+    search: debouncedSearch,
+    status: filters.status,
+  });
   const deleteURLMutation = useDeleteURL();
-  const checkURLMutation = useCheckURL();
+  const analyzeURLMutation = useAnalyzeURL();
 
-  const handleCreateURL = async (data: CreateURLRequest) => {
-    try {
-      await createURLMutation.mutateAsync(data);
-      setShowForm(false);
-    } catch (error) {
-      console.error('Failed to create URL:', error);
-    }
-  };
-
-  const handleDeleteURL = async (url: URL) => {
-    if (window.confirm(`Are you sure you want to delete "${url.title}"?`)) {
+  const handleDeleteURL = async (url: DashboardURL) => {
+    const urlTitle = url.title || url.url;
+    if (window.confirm(`Are you sure you want to delete "${urlTitle}"?`)) {
       try {
         await deleteURLMutation.mutateAsync(url.id);
       } catch (error) {
@@ -40,25 +46,32 @@ const URLManagement: React.FC = () => {
     }
   };
 
-  const handleCheckURL = async (url: URL) => {
+  const handleAnalyzeURL = async (url: DashboardURL) => {
     try {
-      await checkURLMutation.mutateAsync(url.id);
+      await analyzeURLMutation.mutateAsync(url.id);
     } catch (error) {
-      console.error('Failed to check URL:', error);
+      console.error('Failed to analyze URL:', error);
     }
+  };
+
+  const handleAddURLSuccess = () => {
+    // Dialog will close automatically, no additional action needed
+    console.log('URL added successfully');
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({
       ...prev,
       search: event.target.value,
+      page: 1, // Reset to first page when searching
     }));
   };
 
   const handleStatusFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setFilters(prev => ({
       ...prev,
-      status: event.target.value as URLListFilters['status'],
+      status: event.target.value as URLFilters['status'],
+      page: 1, // Reset to first page when filtering
     }));
   };
 
@@ -73,26 +86,19 @@ const URLManagement: React.FC = () => {
           <p className='mt-1 text-sm text-gray-500'>Monitor and manage your website URLs</p>
         </div>
         <div className='mt-4 flex md:ml-4 md:mt-0'>
-          <Button onClick={() => setShowForm(!showForm)} className='inline-flex items-center'>
+          <Button onClick={() => setShowAddDialog(true)} className='inline-flex items-center'>
             <PlusIcon className='mr-2 h-4 w-4' />
             Add URL
           </Button>
         </div>
       </div>
 
-      {/* Add URL Form */}
-      {showForm && (
-        <div className='bg-white shadow rounded-lg'>
-          <div className='px-4 py-5 sm:p-6'>
-            <h3 className='text-lg font-medium leading-6 text-gray-900 mb-4'>Add New URL</h3>
-            <URLForm
-              onSubmit={handleCreateURL}
-              loading={createURLMutation.isPending}
-              submitText='Add URL'
-            />
-          </div>
-        </div>
-      )}
+      {/* Add URL Dialog */}
+      <AddURLDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSuccess={handleAddURLSuccess}
+      />
 
       {/* Filters */}
       <div className='bg-white shadow rounded-lg'>
@@ -130,20 +136,17 @@ const URLManagement: React.FC = () => {
                 className='mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md'
               >
                 <option value='all'>All Status</option>
-                <option value='active'>Active</option>
-                <option value='inactive'>Inactive</option>
                 <option value='pending'>Pending</option>
+                <option value='analyzing'>Analyzing</option>
+                <option value='completed'>Completed</option>
+                <option value='failed'>Failed</option>
               </select>
             </div>
 
-            {/* Stats */}
+            {/* Placeholder for future filters */}
             <div className='flex items-end'>
               <div className='text-sm text-gray-500'>
-                {urlsData && (
-                  <span>
-                    Showing {urlsData.urls.length} of {urlsData.total} URLs
-                  </span>
-                )}
+                {/* Additional filters can be added here */}
               </div>
             </div>
           </div>
@@ -152,21 +155,21 @@ const URLManagement: React.FC = () => {
 
       {/* URLs Table */}
       <URLTable
-        urls={urlsData?.urls || []}
+        urls={urlsData?.data || []}
         loading={isLoading}
         onDelete={handleDeleteURL}
-        onCheck={handleCheckURL}
+        onCheck={handleAnalyzeURL}
       />
 
       {/* Loading states for mutations */}
-      {(deleteURLMutation.isPending || checkURLMutation.isPending) && (
+      {(deleteURLMutation.isPending || analyzeURLMutation.isPending) && (
         <div className='fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50'>
           <div className='bg-white rounded-lg p-6 shadow-xl'>
             <div className='flex items-center'>
-              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mr-3' />
+              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3' />
               <span className='text-sm text-gray-700'>
                 {deleteURLMutation.isPending && 'Deleting URL...'}
-                {checkURLMutation.isPending && 'Checking URL status...'}
+                {analyzeURLMutation.isPending && 'Starting URL analysis...'}
               </span>
             </div>
           </div>

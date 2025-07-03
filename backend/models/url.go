@@ -44,7 +44,8 @@ func (URL) TableName() string {
 
 // URLCreateRequest represents the request payload for creating a URL
 type URLCreateRequest struct {
-	URL string `json:"url" validate:"required,url" binding:"required"`
+	URL   string `json:"url" validate:"required,url" binding:"required"`
+	Title string `json:"title,omitempty" validate:"omitempty,min=2,max=100"`
 }
 
 // URLUpdateRequest represents the request payload for updating a URL

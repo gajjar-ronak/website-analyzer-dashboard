@@ -107,7 +107,13 @@ func (ctrl *URLController) GetAllURLs(c *gin.Context) {
 		limit = 10
 	}
 
-	urls, total, err := ctrl.urlService.GetAllURLs(page, limit)
+	// Parse filter parameters
+	filters := services.URLFilters{
+		Search: c.Query("search"),
+		Status: c.Query("status"),
+	}
+
+	urls, total, err := ctrl.urlService.GetAllURLs(page, limit, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Internal Server Error",

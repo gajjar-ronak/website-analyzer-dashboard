@@ -6,12 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { dashboardApi } from './api';
-import type {
-  DashboardURL,
-  CreateURLRequest,
-  UpdateURLRequest,
-  DashboardStats,
-} from './types';
+import type { DashboardURL, CreateURLRequest, UpdateURLRequest, DashboardStats } from './types';
 
 /**
  * Query keys for React Query caching
@@ -19,7 +14,7 @@ import type {
 export const dashboardQueryKeys = {
   all: ['dashboard'] as const,
   urls: () => [...dashboardQueryKeys.all, 'urls'] as const,
-  urlsList: (params?: { page?: number; limit?: number }) =>
+  urlsList: (params?: { page?: number; limit?: number; search?: string; status?: string }) =>
     [...dashboardQueryKeys.urls(), 'list', params] as const,
   url: (id: number) => [...dashboardQueryKeys.urls(), 'detail', id] as const,
   recentUrls: () => [...dashboardQueryKeys.urls(), 'recent'] as const,
@@ -35,23 +30,28 @@ export const useDashboardData = () => {
   return useQuery({
     queryKey: dashboardQueryKeys.dashboardData(),
     queryFn: dashboardApi.getDashboardData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+    refetchInterval: 15 * 1000, // Refetch every 15 seconds for real-time updates
   });
 };
 
 /**
- * Hook to fetch URLs list with pagination
+ * Hook to fetch URLs list with pagination, search, and filtering
  */
-export const useURLsList = (params?: { page?: number; limit?: number }) => {
+export const useURLsList = (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
   return useQuery({
     queryKey: dashboardQueryKeys.urlsList(params),
     queryFn: () => dashboardApi.getURLs(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    keepPreviousData: true, // Keep previous data while fetching new page
+    staleTime: 30 * 1000, // 30 seconds for more real-time feel
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    refetchInterval: 10 * 1000, // Refetch every 10 seconds for real-time updates
   });
 };
 
@@ -100,7 +100,7 @@ export const useCreateURL = () => {
 
   return useMutation({
     mutationFn: (data: CreateURLRequest) => dashboardApi.createURL(data),
-    onMutate: async (newURL) => {
+    onMutate: async newURL => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: dashboardQueryKeys.urls() });
 
@@ -155,7 +155,7 @@ export const useCreateURL = () => {
       }
       toast.error('Failed to create URL');
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       toast.success('URL created successfully');
       // Invalidate and refetch dashboard data
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.dashboardData() });
