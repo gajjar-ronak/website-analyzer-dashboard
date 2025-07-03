@@ -6,7 +6,7 @@ import {
   ExclamationTriangleIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline';
-import { useDashboardData } from '../features/dashboard/hooks';
+import { useDashboardData } from '../hooks';
 import { RecentURLs, AddURLDialog } from '../features/dashboard/components';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Button } from '../components/Button';

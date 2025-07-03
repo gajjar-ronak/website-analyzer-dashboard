@@ -45,7 +45,7 @@ const getStatusIcon = (status: DashboardURL['status']) => {
 };
 
 const getStatusBadge = (status: DashboardURL['status']) => {
-  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+  const baseClasses = 'inline-flex items-center py-1 px-2.5 rounded-full text-xs font-medium';
 
   switch (status) {
     case 'completed':
@@ -193,9 +193,11 @@ export const URLTable: React.FC<URLTableProps> = ({
                   )}
                 </td>
                 <td className='hidden md:table-cell px-4 py-4 sm:px-6 text-sm text-gray-500'>
-                  {url.analyzed_at
-                    ? formatDistanceToNow(new Date(url.analyzed_at), { addSuffix: true })
-                    : formatDistanceToNow(new Date(url.created_at), { addSuffix: true })}
+                  {url.analyzed_at || url.created_at ? (
+                    <>{new Date(url.analyzed_at || url.created_at).toLocaleString()} </>
+                  ) : (
+                    '-'
+                  )}
                 </td>
                 <td className='hidden sm:table-cell px-4 py-4 sm:px-6'>
                   <div className='flex flex-col space-y-1'>

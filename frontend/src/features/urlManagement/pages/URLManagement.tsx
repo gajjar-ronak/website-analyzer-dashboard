@@ -3,7 +3,7 @@ import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../../components/Button';
 import Select from '../../../components/Select';
 import { AddURLDialog, URLTable } from '../../dashboard/components';
-import { useURLsList, useDeleteURL, useAnalyzeURL } from '../../dashboard/hooks';
+import { useURLsList, useDeleteURL, useAnalyzeURL } from '../../../hooks';
 import { useDebounce } from '../../../hooks/useDebounce';
 import type { DashboardURL } from '../../dashboard/types';
 
