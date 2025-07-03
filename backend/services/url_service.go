@@ -3,7 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"log"
 	"time"
 
 	"website-analyzer-backend/database"
@@ -14,13 +14,15 @@ import (
 
 // URLService handles business logic for URL operations
 type URLService struct {
-	db *gorm.DB
+	db          *gorm.DB
+	seoAnalyzer *SEOAnalyzer
 }
 
 // NewURLService creates a new URL service instance
 func NewURLService() *URLService {
 	return &URLService{
-		db: database.GetDB(),
+		db:          database.GetDB(),
+		seoAnalyzer: NewSEOAnalyzer(),
 	}
 }
 
@@ -175,7 +177,7 @@ func (s *URLService) AnalyzeURL(id uint) error {
 	return nil
 }
 
-// performAnalysis performs basic URL analysis (simplified implementation)
+// performAnalysis performs comprehensive SEO analysis on a URL
 func (s *URLService) performAnalysis(id uint) {
 	// Get the URL record
 	var url models.URL
@@ -189,30 +191,97 @@ func (s *URLService) performAnalysis(id uint) {
 		return
 	}
 
-	// Simulate analysis time (2-5 seconds)
-	time.Sleep(time.Duration(2+rand.Intn(3)) * time.Second)
+	log.Printf("Starting SEO analysis for URL: %s", url.URL)
 
-	// Perform basic analysis (placeholder - in real implementation, you'd fetch and parse the URL)
-	updates := map[string]interface{}{
-		"status":      "completed",
-		"status_code": 200, // In real implementation, get actual HTTP status
-		"analyzed_at": time.Now(),
-		"updated_at":  time.Now(),
+	// Perform comprehensive SEO analysis
+	result, err := s.seoAnalyzer.AnalyzeURL(url.URL)
+	if err != nil {
+		// Mark as failed if analysis fails
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": fmt.Sprintf("Analysis failed: %v", err),
+			"updated_at":    time.Now(),
+		})
+		return
 	}
 
-	// In a real implementation, you would:
-	// 1. Make HTTP request to the URL
-	// 2. Parse HTML content
-	// 3. Extract meta tags, headings, etc.
-	// 4. Measure load time and page size
-	// For now, we just mark it as completed without sample data
+	// Convert arrays to JSON strings for database storage
+	jsonStrings, err := s.seoAnalyzer.ConvertToJSONStrings(result)
+	if err != nil {
+		log.Printf("Failed to convert analysis results to JSON: %v", err)
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": "Failed to process analysis results",
+			"updated_at":    time.Now(),
+		})
+		return
+	}
 
+	// Prepare updates with all analysis results
+	updates := map[string]interface{}{
+		"status":      "completed",
+		"status_code": result.StatusCode,
+		"analyzed_at": time.Now(),
+		"updated_at":  time.Now(),
+
+		// SEO Analysis fields
+		"html_version":     result.HTMLVersion,
+		"meta_title":       result.MetaTitle,
+		"meta_description": result.MetaDescription,
+
+		// Heading tags
+		"h1_tags":  jsonStrings["h1_tags"],
+		"h2_tags":  jsonStrings["h2_tags"],
+		"h3_tags":  jsonStrings["h3_tags"],
+		"h4_tags":  jsonStrings["h4_tags"],
+		"h5_tags":  jsonStrings["h5_tags"],
+		"h6_tags":  jsonStrings["h6_tags"],
+		"h1_count": result.H1Count,
+		"h2_count": result.H2Count,
+		"h3_count": result.H3Count,
+		"h4_count": result.H4Count,
+		"h5_count": result.H5Count,
+		"h6_count": result.H6Count,
+
+		// Link analysis
+		"image_count":        result.ImageCount,
+		"link_count":         result.TotalLinks,
+		"internal_links":     result.InternalLinks,
+		"external_links":     result.ExternalLinks,
+		"broken_links":       len(result.BrokenLinks),
+		"broken_links_list":  jsonStrings["broken_links_list"],
+
+		// Form analysis
+		"has_login_form": result.HasLoginForm,
+		"form_count":     result.FormCount,
+
+		// Performance
+		"load_time": result.LoadTime,
+		"page_size": result.PageSize,
+	}
+
+	// Add error message if there was one during analysis
+	if result.ErrorMessage != "" {
+		updates["error_message"] = result.ErrorMessage
+		// If there was an error but we got some results, mark as completed with warnings
+		if result.StatusCode > 0 {
+			updates["status"] = "completed"
+		} else {
+			updates["status"] = "failed"
+		}
+	}
+
+	// Update the database with analysis results
 	if err := s.db.Model(&models.URL{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		log.Printf("Failed to update analysis results: %v", err)
 		// If update fails, mark as failed
 		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
 			"status":        "failed",
-			"error_message": "Failed to update analysis results",
+			"error_message": "Failed to save analysis results",
 			"updated_at":    time.Now(),
 		})
+		return
 	}
+
+	log.Printf("SEO analysis completed successfully for URL: %s", url.URL)
 }

@@ -155,40 +155,45 @@ const Dashboard: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className='space-y-6'>
+      <div className='space-y-3 sm:space-y-4'>
         {/* Header */}
-        <div className='md:flex md:items-center md:justify-between'>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
           <div className='min-w-0 flex-1'>
-            <h1 className='text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight'>
-              Dashboard
-            </h1>
-            <p className='mt-1 text-sm text-gray-500'>
+            <h1 className='text-lg font-semibold text-gray-900 sm:text-xl'>Dashboard</h1>
+            <p className='mt-0.5 text-xs text-gray-600'>
               Overview of your website analysis and monitoring
             </p>
           </div>
-          <div className='mt-4 flex md:ml-4 md:mt-0'>
-            <Button onClick={() => setShowAddDialog(true)} className='inline-flex items-center'>
-              <PlusIcon className='mr-2 h-4 w-4' />
+          <div className='flex-shrink-0'>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              size='sm'
+              className='inline-flex items-center text-xs'
+            >
+              <PlusIcon className='mr-1.5 h-3.5 w-3.5' />
               Add URL
             </Button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
           {stats.map(stat => (
-            <div key={stat.name} className='bg-white overflow-hidden shadow rounded-lg'>
-              <div className='p-5'>
+            <div
+              key={stat.name}
+              className='bg-white overflow-hidden shadow-sm rounded-md border border-gray-200'
+            >
+              <div className='p-3 sm:p-4'>
                 <div className='flex items-center'>
                   <div className='flex-shrink-0'>
-                    <div className={`p-2 rounded-md ${stat.bgColor}`}>
-                      <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                    <div className={`p-1.5 rounded-md ${stat.bgColor}`}>
+                      <stat.icon className={`h-4 w-4 ${stat.color}`} />
                     </div>
                   </div>
-                  <div className='ml-5 w-0 flex-1'>
+                  <div className='ml-3 w-0 flex-1'>
                     <dl>
-                      <dt className='text-sm font-medium text-gray-500 truncate'>{stat.name}</dt>
-                      <dd className='text-lg font-medium text-gray-900'>{stat.value}</dd>
+                      <dt className='text-xs font-medium text-gray-500 truncate'>{stat.name}</dt>
+                      <dd className='text-base font-semibold text-gray-900'>{stat.value}</dd>
                     </dl>
                   </div>
                 </div>

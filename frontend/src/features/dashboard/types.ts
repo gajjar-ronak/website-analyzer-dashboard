@@ -19,10 +19,33 @@ export interface DashboardURL {
   seo_analysis: {
     meta_title: string;
     meta_description: string;
-    h1_tags: string;
-    h2_tags: string;
+    html_version: string;
+    heading_tags: {
+      h1_tags: string;
+      h2_tags: string;
+      h3_tags: string;
+      h4_tags: string;
+      h5_tags: string;
+      h6_tags: string;
+      h1_count: number;
+      h2_count: number;
+      h3_count: number;
+      h4_count: number;
+      h5_count: number;
+      h6_count: number;
+    };
+    link_analysis: {
+      total_links: number;
+      internal_links: number;
+      external_links: number;
+      broken_links: number;
+      broken_links_list: string[];
+    };
+    form_analysis: {
+      has_login_form: boolean;
+      form_count: number;
+    };
     image_count: number;
-    link_count: number;
   };
 
   // Performance data

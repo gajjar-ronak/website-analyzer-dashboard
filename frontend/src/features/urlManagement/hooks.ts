@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { urlApi, mockURLs } from './api';
+import { mockURLs } from './api';
 import type {
   URL,
   CreateURLRequest,

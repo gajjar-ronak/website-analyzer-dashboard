@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../../components/Button';
+import Select from '../../../components/Select';
 import { AddURLDialog, URLTable } from '../../dashboard/components';
 import { useURLsList, useDeleteURL, useAnalyzeURL } from '../../dashboard/hooks';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -23,7 +24,7 @@ const URLManagement: React.FC = () => {
   });
 
   // Debounce search to prevent excessive API calls
-  const debouncedSearch = useDebounce(filters.search, 500);
+  const debouncedSearch = useDebounce(filters.search, 800);
 
   // Queries and mutations using dashboard hooks
   const { data: urlsData, isLoading } = useURLsList({
@@ -67,27 +68,37 @@ const URLManagement: React.FC = () => {
     }));
   };
 
-  const handleStatusFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusFilterChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
-      status: event.target.value as URLFilters['status'],
+      status: value as URLFilters['status'],
       page: 1, // Reset to first page when filtering
     }));
   };
 
+  const statusOptions = [
+    { value: 'all', label: 'All Status' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'analyzing', label: 'Analyzing' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'failed', label: 'Failed' },
+  ];
+
   return (
-    <div className='space-y-6'>
+    <div className='space-y-3 sm:space-y-4'>
       {/* Header */}
-      <div className='md:flex md:items-center md:justify-between'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
         <div className='min-w-0 flex-1'>
-          <h2 className='text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight'>
-            URL Management
-          </h2>
-          <p className='mt-1 text-sm text-gray-500'>Monitor and manage your website URLs</p>
+          <h1 className='text-lg font-semibold text-gray-900 sm:text-xl'>URL Management</h1>
+          <p className='mt-0.5 text-xs text-gray-600'>Monitor and manage your website URLs</p>
         </div>
-        <div className='mt-4 flex md:ml-4 md:mt-0'>
-          <Button onClick={() => setShowAddDialog(true)} className='inline-flex items-center'>
-            <PlusIcon className='mr-2 h-4 w-4' />
+        <div className='flex-shrink-0'>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            size='sm'
+            className='inline-flex items-center text-xs'
+          >
+            <PlusIcon className='mr-1.5 h-3.5 w-3.5' />
             Add URL
           </Button>
         </div>
@@ -101,53 +112,38 @@ const URLManagement: React.FC = () => {
       />
 
       {/* Filters */}
-      <div className='bg-white shadow rounded-lg'>
-        <div className='px-4 py-5 sm:p-6'>
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='bg-white shadow-sm rounded-md border border-gray-200'>
+        <div className='px-3 py-3 sm:px-4 sm:py-4'>
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
             {/* Search */}
-            <div>
-              <label htmlFor='search' className='block text-sm font-medium text-gray-700'>
+            <div className='sm:col-span-2 xl:col-span-1'>
+              <label htmlFor='search' className='block text-xs font-medium text-gray-700 mb-1'>
                 Search
               </label>
-              <div className='mt-1 relative rounded-md shadow-sm'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <MagnifyingGlassIcon className='h-5 w-5 text-gray-400' />
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none'>
+                  <MagnifyingGlassIcon className='h-3.5 w-3.5 text-gray-400' />
                 </div>
                 <input
                   type='text'
                   id='search'
                   value={filters.search || ''}
                   onChange={handleSearchChange}
-                  className='block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm'
-                  placeholder='Search URLs...'
+                  className='block w-full pl-8 pr-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors'
+                  placeholder='Search URLs or titles...'
                 />
               </div>
             </div>
 
             {/* Status Filter */}
             <div>
-              <label htmlFor='status' className='block text-sm font-medium text-gray-700'>
-                Status
-              </label>
-              <select
-                id='status'
+              <Select
+                label='Status'
                 value={filters.status || 'all'}
                 onChange={handleStatusFilterChange}
-                className='mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md'
-              >
-                <option value='all'>All Status</option>
-                <option value='pending'>Pending</option>
-                <option value='analyzing'>Analyzing</option>
-                <option value='completed'>Completed</option>
-                <option value='failed'>Failed</option>
-              </select>
-            </div>
-
-            {/* Placeholder for future filters */}
-            <div className='flex items-end'>
-              <div className='text-sm text-gray-500'>
-                {/* Additional filters can be added here */}
-              </div>
+                options={statusOptions}
+                size='sm'
+              />
             </div>
           </div>
         </div>
@@ -164,10 +160,10 @@ const URLManagement: React.FC = () => {
       {/* Loading states for mutations */}
       {(deleteURLMutation.isPending || analyzeURLMutation.isPending) && (
         <div className='fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg p-6 shadow-xl'>
+          <div className='bg-white rounded-md p-4 shadow-xl'>
             <div className='flex items-center'>
-              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3' />
-              <span className='text-sm text-gray-700'>
+              <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2' />
+              <span className='text-xs text-gray-700'>
                 {deleteURLMutation.isPending && 'Deleting URL...'}
                 {analyzeURLMutation.isPending && 'Starting URL analysis...'}
               </span>
