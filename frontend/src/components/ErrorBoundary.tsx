@@ -3,7 +3,8 @@
  * Catches JavaScript errors anywhere in the child component tree
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component } from 'react';
+import type { ReactNode, ErrorInfo } from 'react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface Props {
