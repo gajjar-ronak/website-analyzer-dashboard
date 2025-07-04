@@ -3,30 +3,40 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  EyeIcon,
   PencilIcon,
   TrashIcon,
+  PlayIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '../../../components/Button';
 import { formatDateTime, formatRelativeTime } from '../../../utils/formatDate';
 import { cn } from '../../../utils/cn';
-import type { URL } from '../types';
+import type { DashboardURL } from '../../dashboard/types';
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/20/solid';
 
 interface URLTableProps {
-  urls: URL[];
+  urls: DashboardURL[];
   loading?: boolean;
-  onView?: (url: URL) => void;
-  onEdit?: (url: URL) => void;
-  onDelete?: (url: URL) => void;
-  onCheck?: (url: URL) => void;
+  selectedIds?: number[];
+  analyzingIds?: number[];
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  onView?: (url: DashboardURL) => void;
+  onEdit?: (url: DashboardURL) => void;
+  onDelete?: (url: DashboardURL) => void;
+  onCheck?: (url: DashboardURL) => void;
+  onSelectUrl?: (id: number, selected: boolean) => void;
+  onSelectAll?: (selected: boolean) => void;
+  onSort?: (field: string) => void;
 }
 
-const getStatusIcon = (status: URL['status']) => {
+const getStatusIcon = (status: DashboardURL['status']) => {
   switch (status) {
-    case 'active':
+    case 'completed':
       return <CheckCircleIcon className='h-5 w-5 text-green-500' />;
-    case 'inactive':
+    case 'failed':
       return <XCircleIcon className='h-5 w-5 text-red-500' />;
+    case 'analyzing':
+      return <ClockIcon className='h-5 w-5 text-blue-500' />;
     case 'pending':
       return <ClockIcon className='h-5 w-5 text-yellow-500' />;
     default:
@@ -34,14 +44,16 @@ const getStatusIcon = (status: URL['status']) => {
   }
 };
 
-const getStatusBadge = (status: URL['status']) => {
-  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+const getStatusBadge = (status: DashboardURL['status']) => {
+  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text[10px]';
 
   switch (status) {
-    case 'active':
-      return <span className={cn(baseClasses, 'bg-green-100 text-green-800')}>Active</span>;
-    case 'inactive':
-      return <span className={cn(baseClasses, 'bg-red-100 text-red-800')}>Inactive</span>;
+    case 'completed':
+      return <span className={cn(baseClasses, 'bg-green-100 text-green-800')}>Completed</span>;
+    case 'failed':
+      return <span className={cn(baseClasses, 'bg-red-100 text-red-800')}>Failed</span>;
+    case 'analyzing':
+      return <span className={cn(baseClasses, 'bg-blue-100 text-blue-800')}>Analyzing</span>;
     case 'pending':
       return <span className={cn(baseClasses, 'bg-yellow-100 text-yellow-800')}>Pending</span>;
     default:
@@ -52,11 +64,43 @@ const getStatusBadge = (status: URL['status']) => {
 const URLTable: React.FC<URLTableProps> = ({
   urls,
   loading = false,
+  selectedIds = [],
+  analyzingIds = [],
+  sortBy,
+  sortOrder,
   onView,
   onEdit,
   onDelete,
   onCheck,
+  onSelectUrl,
+  onSelectAll,
+  onSort,
 }) => {
+  const allSelected = urls.length > 0 && selectedIds.length === urls.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < urls.length;
+
+  const getSortIcons = (field: string) => {
+    if (sortBy === field) {
+      return sortOrder === 'asc' ? (
+        <ArrowUpIcon className='h-4 w-4 text-blue-500 inline' />
+      ) : (
+        <ArrowDownIcon className='h-4 w-4 text-blue-500 inline' />
+      );
+    }
+    // Show both faded icons for inactive columns with spacing
+    return (
+      <span className='flex flex-col ml-1 items-center'>
+        <ArrowUpIcon className='h-3 w-3 text-gray-300 mb-0.5' />
+        <ArrowDownIcon className='h-3 w-3 text-gray-300 mt-0.5' />
+      </span>
+    );
+  };
+
+  const handleSort = (field: string) => {
+    if (onSort) {
+      onSort(field);
+    }
+  };
   if (loading) {
     return (
       <div className='animate-pulse'>
@@ -104,69 +148,117 @@ const URLTable: React.FC<URLTableProps> = ({
   return (
     <div className='bg-white shadow rounded-lg overflow-hidden'>
       <div className='overflow-x-auto'>
-        <table className='min-w-full divide-y divide-gray-200'>
+        <table className='min-w-full divide-y divide-gray-200 text-xs'>
           <thead className='bg-gray-50'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Status
+              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+                <input
+                  type='checkbox'
+                  className='h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+                  checked={allSelected}
+                  ref={input => {
+                    if (input) input.indeterminate = someSelected;
+                  }}
+                  onChange={e => onSelectAll?.(e.target.checked)}
+                />
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                URL
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
+                onClick={() => handleSort('status')}
+              >
+                <div className='flex items-center space-x-1'>
+                  <span>Status</span>
+                  {getSortIcons('status')}
+                </div>
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Response Time
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
+                onClick={() => handleSort('title')}
+              >
+                <div className='flex items-center space-x-1'>
+                  <span>URL</span>
+                  {getSortIcons('title')}
+                </div>
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Last Checked
+              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+                HTML Version
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+                Internal Links
+              </th>
+              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+                External Links
+              </th>
+              {/* <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
+                onClick={() => handleSort('analyzed_at')}
+              >
+                <div className='flex items-center space-x-1'>
+                  <span>Last Checked</span>
+                  {getSortIcons('analyzed_at')}
+                </div>
+              </th> */}
+              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className='bg-white divide-y divide-gray-200'>
+          <tbody className='bg-white divide-y divide-gray-200 text-xs'>
             {urls.map(url => (
               <tr key={url.id} className='hover:bg-gray-50'>
-                <td className='px-6 py-4 whitespace-nowrap'>
+                <td className='px-2 py-2 whitespace-nowrap'>
+                  <input
+                    type='checkbox'
+                    className='h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+                    checked={selectedIds.includes(url.id)}
+                    onChange={e => onSelectUrl?.(url.id, e.target.checked)}
+                  />
+                </td>
+                <td className='px-2 py-2 whitespace-nowrap'>
                   <div className='flex items-center'>
                     {getStatusIcon(url.status)}
-                    <div className='ml-3'>{getStatusBadge(url.status)}</div>
+                    <div className='ml-2'>{getStatusBadge(url.status)}</div>
                   </div>
                 </td>
-                <td className='px-6 py-4'>
+                <td className='px-2 py-2'>
                   <div className='flex flex-col'>
-                    <div className='text-sm font-medium text-gray-900 truncate max-w-xs'>
+                    <button
+                      onClick={() => onView?.(url)}
+                      className='text-xs font-medium text-blue-600 hover:text-blue-800 truncate max-w-xs text-left'
+                    >
                       {url.title}
-                    </div>
-                    <div className='text-sm text-gray-500 truncate max-w-xs'>{url.url}</div>
+                    </button>
+                    <div className='text-xs text-gray-500 truncate max-w-xs'>{url.url}</div>
                     {url.description && (
-                      <div className='text-xs text-gray-400 truncate max-w-xs mt-1'>
+                      <div className='text-[10px] text-gray-400 truncate max-w-xs mt-0.5'>
                         {url.description}
                       </div>
                     )}
                   </div>
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {url.responseTime ? `${url.responseTime}ms` : '-'}
+                <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
+                  {url.seo_analysis?.html_version || '-'}
                 </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+                <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
+                  {url.seo_analysis?.link_analysis?.internal_links || 0}
+                </td>
+                <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
+                  {url.seo_analysis?.link_analysis?.external_links || 0}
+                </td>
+                {/* <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-500'>
                   <div className='flex flex-col'>
-                    <span>{formatRelativeTime(url.lastChecked)}</span>
-                    <span className='text-xs text-gray-400'>{formatDateTime(url.lastChecked)}</span>
-                  </div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
-                  <div className='flex items-center space-x-2'>
-                    {onView && (
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => onView(url)}
-                        className='text-gray-400 hover:text-gray-600'
-                      >
-                        <EyeIcon className='h-4 w-4' />
-                      </Button>
+                    <span>
+                      {url.analyzed_at ? formatRelativeTime(new Date(url.analyzed_at)) : 'Never'}
+                    </span>
+                    {url.analyzed_at && (
+                      <span className='text-[10px] text-gray-400'>
+                        {formatDateTime(new Date(url.analyzed_at))}
+                      </span>
                     )}
+                  </div>
+                </td> */}
+                <td className='px-2 py-2 whitespace-nowrap text-xs font-medium'>
+                  <div className='flex items-center space-x-1'>
                     {onEdit && (
                       <Button
                         variant='ghost'
@@ -182,9 +274,16 @@ const URLTable: React.FC<URLTableProps> = ({
                         variant='ghost'
                         size='sm'
                         onClick={() => onCheck(url)}
-                        className='text-blue-400 hover:text-blue-600'
+                        disabled={analyzingIds.includes(url.id) || url.status === 'analyzing'}
+                        className='text-blue-400 hover:text-blue-600 disabled:opacity-50'
                       >
-                        Check
+                        {analyzingIds.includes(url.id) || url.status === 'analyzing' ? (
+                          <div className='flex items-center space-x-1'>
+                            <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600' />
+                          </div>
+                        ) : (
+                          <PlayIcon className='h-4 w-4' />
+                        )}
                       </Button>
                     )}
                     {onDelete && (

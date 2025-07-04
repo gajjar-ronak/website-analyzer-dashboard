@@ -311,3 +311,148 @@ func (s *URLService) performAnalysis(id uint) {
 
 	log.Printf("SEO analysis completed successfully for URL: %s", url.URL)
 }
+
+// BulkDeleteURLs deletes multiple URLs by their IDs
+func (s *URLService) BulkDeleteURLs(ids []uint) error {
+	if len(ids) == 0 {
+		return errors.New("no IDs provided")
+	}
+
+	// Start a transaction
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to start transaction: %w", tx.Error)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Delete URLs in bulk
+	result := tx.Where("id IN ?", ids).Delete(&models.URL{})
+	if result.Error != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to delete URLs: %w", result.Error)
+	}
+
+	// Check if any URLs were actually deleted
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		return errors.New("no URLs found with the provided IDs")
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Printf("Successfully deleted %d URLs", result.RowsAffected)
+	return nil
+}
+
+// BulkAnalyzeURLs triggers analysis for multiple URLs by their IDs
+func (s *URLService) BulkAnalyzeURLs(ids []uint) error {
+	if len(ids) == 0 {
+		return errors.New("no IDs provided")
+	}
+
+	// Start a transaction
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to start transaction: %w", tx.Error)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Update status to analyzing for all URLs
+	result := tx.Model(&models.URL{}).Where("id IN ?", ids).Updates(map[string]interface{}{
+		"status":     "analyzing",
+		"updated_at": time.Now(),
+	})
+	if result.Error != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to update URL status: %w", result.Error)
+	}
+
+	// Check if any URLs were actually updated
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		return errors.New("no URLs found with the provided IDs")
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// Start analysis for each URL in separate goroutines
+	for _, id := range ids {
+		go s.performAnalysis(id)
+	}
+
+	log.Printf("Successfully started analysis for %d URLs", result.RowsAffected)
+	return nil
+}
+
+// BulkImportURLs creates multiple URLs from import data
+func (s *URLService) BulkImportURLs(urls []models.URLCreateRequest) ([]models.URL, []error) {
+	if len(urls) == 0 {
+		return nil, []error{errors.New("no URLs provided")}
+	}
+
+	var createdURLs []models.URL
+	var errors []error
+
+	// Start a transaction
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return nil, []error{fmt.Errorf("failed to start transaction: %w", tx.Error)}
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	for i, urlReq := range urls {
+		// Check if URL already exists
+		var existingURL models.URL
+		if err := tx.Where("url = ?", urlReq.URL).First(&existingURL).Error; err == nil {
+			errors = append(errors, fmt.Errorf("row %d: URL already exists: %s", i+1, urlReq.URL))
+			continue
+		}
+
+		// Create new URL record
+		url := models.URL{
+			URL:       urlReq.URL,
+			Title:     urlReq.Title,
+			Status:    "pending",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		if err := tx.Create(&url).Error; err != nil {
+			errors = append(errors, fmt.Errorf("row %d: failed to create URL %s: %w", i+1, urlReq.URL, err))
+			continue
+		}
+
+		createdURLs = append(createdURLs, url)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, []error{fmt.Errorf("failed to commit transaction: %w", err)}
+	}
+
+	// Start analysis for each created URL in separate goroutines
+	for _, url := range createdURLs {
+		go s.performAnalysis(url.ID)
+	}
+
+	log.Printf("Successfully imported %d URLs with %d errors", len(createdURLs), len(errors))
+	return createdURLs, errors
+}

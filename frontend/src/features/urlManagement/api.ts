@@ -51,8 +51,20 @@ export const urlApi = {
     return apiClient.put<URL[]>('/urls/bulk', { ids, ...data });
   },
 
-  bulkDeleteURLs: async (ids: string[]): Promise<void> => {
+  bulkDeleteURLs: async (ids: number[]): Promise<void> => {
     return apiClient.delete<void>('/urls/bulk', { ids });
+  },
+
+  bulkAnalyzeURLs: async (ids: number[]): Promise<void> => {
+    return apiClient.post<void>('/urls/bulk/analyze', { ids });
+  },
+
+  bulkImportURLs: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Don't set Content-Type header - let browser handle it for FormData
+    return apiClient.post<any>('/urls/bulk/import', formData);
   },
 };
 

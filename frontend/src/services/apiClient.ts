@@ -86,14 +86,28 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 
+    // Don't set Content-Type for FormData - let browser handle it
+    const isFormData = options.body instanceof FormData;
+    let headers: Record<string, string>;
+
+    if (isFormData) {
+      // For FormData, only include non-Content-Type headers
+      const { 'Content-Type': _, ...defaultHeadersWithoutContentType } = this.defaultHeaders;
+      headers = {
+        ...defaultHeadersWithoutContentType,
+        ...((options.headers as Record<string, string>) || {}),
+      };
+    } else {
+      headers = {
+        ...this.defaultHeaders,
+        ...((options.headers as Record<string, string>) || {}),
+      };
+    }
+
     // Apply request interceptors
     let requestConfig: RequestInit = {
       ...options,
-      url,
-      headers: {
-        ...this.defaultHeaders,
-        ...options.headers,
-      },
+      headers,
     };
 
     for (const interceptor of this.requestInterceptors) {
@@ -168,11 +182,23 @@ class ApiClient {
     return this.request<T>(url.pathname + url.search);
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
-    return this.request<T>(endpoint, {
+  async post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    const isFormData = data instanceof FormData;
+
+    const requestOptions: RequestInit = {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      ...options,
+    };
+
+    // For FormData, don't set any headers - let browser handle it
+    if (isFormData) {
+      requestOptions.headers = {
+        ...((options?.headers as Record<string, string>) || {}),
+      };
+    }
+
+    return this.request<T>(endpoint, requestOptions);
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
@@ -189,9 +215,10 @@ class ApiClient {
     });
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
+  async delete<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
 

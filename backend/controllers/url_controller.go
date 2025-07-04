@@ -12,13 +12,15 @@ import (
 
 // URLController handles HTTP requests for URL operations
 type URLController struct {
-	urlService *services.URLService
+	urlService    *services.URLService
+	importService *services.ImportService
 }
 
 // NewURLController creates a new URL controller instance
 func NewURLController() *URLController {
 	return &URLController{
-		urlService: services.NewURLService(),
+		urlService:    services.NewURLService(),
+		importService: services.NewImportService(),
 	}
 }
 
@@ -255,5 +257,158 @@ func (ctrl *URLController) AnalyzeURL(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"message": "URL analysis started successfully",
+	})
+}
+
+// BulkDeleteURLs handles DELETE /api/urls/bulk
+func (ctrl *URLController) BulkDeleteURLs(c *gin.Context) {
+	var req models.BulkDeleteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "Invalid request payload",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	if len(req.IDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "No IDs provided",
+		})
+		return
+	}
+
+	err := ctrl.urlService.BulkDeleteURLs(req.IDs)
+	if err != nil {
+		if err.Error() == "no URLs found with the provided IDs" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":   "Not Found",
+				"message": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Internal Server Error",
+			"message": "Failed to delete URLs",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "URLs deleted successfully",
+	})
+}
+
+// BulkAnalyzeURLs handles POST /api/urls/bulk/analyze
+func (ctrl *URLController) BulkAnalyzeURLs(c *gin.Context) {
+	var req models.BulkAnalyzeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "Invalid request payload",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	if len(req.IDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "No IDs provided",
+		})
+		return
+	}
+
+	err := ctrl.urlService.BulkAnalyzeURLs(req.IDs)
+	if err != nil {
+		if err.Error() == "no URLs found with the provided IDs" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":   "Not Found",
+				"message": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Internal Server Error",
+			"message": "Failed to start bulk analysis",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"message": "Bulk analysis started successfully",
+	})
+}
+
+// BulkImportURLs handles POST /api/urls/bulk/import
+func (ctrl *URLController) BulkImportURLs(c *gin.Context) {
+	// Parse multipart form
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "No file uploaded",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Validate file size (max 10MB)
+	maxSize := int64(10 << 20) // 10MB
+	if file.Size > maxSize {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "File size exceeds 10MB limit",
+		})
+		return
+	}
+
+	// Parse the uploaded file
+	result, err := ctrl.importService.ParseUploadedFile(file)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "Failed to parse file",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	if len(result.URLs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "No valid URLs found in file",
+			"details": result.Errors,
+		})
+		return
+	}
+
+	// Import URLs
+	createdURLs, importErrors := ctrl.urlService.BulkImportURLs(result.URLs)
+
+	// Combine parsing and import errors
+	allErrors := result.Errors
+	for _, err := range importErrors {
+		allErrors = append(allErrors, err.Error())
+	}
+
+	// Convert created URLs to response format
+	var urlResponses []models.URLResponse
+	for _, url := range createdURLs {
+		urlResponses = append(urlResponses, url.ToResponse())
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Bulk import completed",
+		"data": gin.H{
+			"imported_count": len(createdURLs),
+			"error_count":    len(allErrors),
+			"urls":           urlResponses,
+			"errors":         allErrors,
+		},
 	})
 }

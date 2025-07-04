@@ -66,5 +66,13 @@ func setupURLRoutes(rg *gin.RouterGroup) {
 		urls.PUT("/:id", urlController.UpdateURL)        // PUT /api/v1/urls/:id
 		urls.DELETE("/:id", urlController.DeleteURL)     // DELETE /api/v1/urls/:id
 		urls.POST("/:id/analyze", urlController.AnalyzeURL) // POST /api/v1/urls/:id/analyze
+
+		// Bulk operations
+		bulk := urls.Group("/bulk")
+		{
+			bulk.DELETE("", urlController.BulkDeleteURLs)     // DELETE /api/v1/urls/bulk
+			bulk.POST("/analyze", urlController.BulkAnalyzeURLs) // POST /api/v1/urls/bulk/analyze
+			bulk.POST("/import", urlController.BulkImportURLs)   // POST /api/v1/urls/bulk/import
+		}
 	}
 }

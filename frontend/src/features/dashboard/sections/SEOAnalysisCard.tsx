@@ -98,25 +98,25 @@ export const SEOAnalysisCard: React.FC<SEOAnalysisCardProps> = ({ url }) => {
               <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                 {/* Statistics Cards */}
                 <div className='grid grid-cols-2 gap-2'>
-                  <div className='text-center p-2 bg-blue-50 rounded-md'>
+                  <div className='flex flex-col items-center justify-center text-center p-2 bg-blue-50 rounded-md'>
                     <div className='text-sm font-semibold text-blue-900'>
                       {seo_analysis.link_analysis.total_links}
                     </div>
                     <div className='text-xs text-blue-600'>Total</div>
                   </div>
-                  <div className='text-center p-2 bg-green-50 rounded-md'>
+                  <div className='flex flex-col items-center justify-center text-center p-2 bg-green-50 rounded-md'>
                     <div className='text-sm font-semibold text-green-900'>
                       {seo_analysis.link_analysis.internal_links}
                     </div>
                     <div className='text-xs text-green-600'>Internal</div>
                   </div>
-                  <div className='text-center p-2 bg-purple-50 rounded-md'>
+                  <div className='flex flex-col items-center justify-center text-center p-2 bg-purple-50 rounded-md'>
                     <div className='text-sm font-semibold text-purple-900'>
                       {seo_analysis.link_analysis.external_links}
                     </div>
                     <div className='text-xs text-purple-600'>External</div>
                   </div>
-                  <div className='text-center p-2 bg-red-50 rounded-md'>
+                  <div className='flex flex-col items-center justify-center text-center p-2 bg-red-50 rounded-md'>
                     <div className='text-sm font-semibold text-red-900'>
                       {seo_analysis.link_analysis.broken_links}
                     </div>

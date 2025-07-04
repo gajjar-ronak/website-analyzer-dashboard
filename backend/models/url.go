@@ -80,6 +80,21 @@ type URLUpdateRequest struct {
 	Status      *string `json:"status,omitempty"`
 }
 
+// BulkDeleteRequest represents the request payload for bulk deleting URLs
+type BulkDeleteRequest struct {
+	IDs []uint `json:"ids" validate:"required,min=1" binding:"required"`
+}
+
+// BulkAnalyzeRequest represents the request payload for bulk analyzing URLs
+type BulkAnalyzeRequest struct {
+	IDs []uint `json:"ids" validate:"required,min=1" binding:"required"`
+}
+
+// BulkImportRequest represents the request payload for bulk importing URLs
+type BulkImportRequest struct {
+	URLs []URLCreateRequest `json:"urls" validate:"required,min=1,dive" binding:"required"`
+}
+
 // URLResponse represents the response format for URL data
 type URLResponse struct {
 	ID          uint       `json:"id"`

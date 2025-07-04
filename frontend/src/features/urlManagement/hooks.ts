@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { mockURLs } from './api';
+import { mockURLs, urlApi } from './api';
 import type {
   URL,
   CreateURLRequest,
@@ -138,6 +138,51 @@ export const useDeleteURL = () => {
       }
 
       mockURLs.splice(urlIndex, 1);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch URLs list
+      queryClient.invalidateQueries({ queryKey: urlQueryKeys.lists() });
+    },
+  });
+};
+
+// Hook for bulk delete URLs
+export const useBulkDeleteURLs = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: number[]): Promise<void> => {
+      return urlApi.bulkDeleteURLs(ids);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch URLs list
+      queryClient.invalidateQueries({ queryKey: urlQueryKeys.lists() });
+    },
+  });
+};
+
+// Hook for bulk analyze URLs
+export const useBulkAnalyzeURLs = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: number[]): Promise<void> => {
+      return urlApi.bulkAnalyzeURLs(ids);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch URLs list
+      queryClient.invalidateQueries({ queryKey: urlQueryKeys.lists() });
+    },
+  });
+};
+
+// Hook for bulk import URLs
+export const useBulkImportURLs = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File): Promise<any> => {
+      return urlApi.bulkImportURLs(file);
     },
     onSuccess: () => {
       // Invalidate and refetch URLs list
