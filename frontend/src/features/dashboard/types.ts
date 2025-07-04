@@ -39,7 +39,11 @@ export interface DashboardURL {
       internal_links: number;
       external_links: number;
       broken_links: number;
-      broken_links_list: string[];
+      broken_links_list: Array<{
+        url: string;
+        status_code: number;
+        error?: string;
+      }>;
     };
     form_analysis: {
       has_login_form: boolean;

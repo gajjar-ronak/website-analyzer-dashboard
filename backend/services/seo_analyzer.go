@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"website-analyzer-backend/models"
 )
 
 // SEOAnalyzer handles comprehensive SEO analysis of websites
@@ -23,6 +24,13 @@ func NewSEOAnalyzer() *SEOAnalyzer {
 			Timeout: 30 * time.Second,
 		},
 	}
+}
+
+// BrokenLink represents a broken link with its status code
+type BrokenLink struct {
+	URL        string `json:"url"`
+	StatusCode int    `json:"status_code"`
+	Error      string `json:"error,omitempty"`
 }
 
 // SEOAnalysisResult contains all the SEO analysis data
@@ -47,7 +55,7 @@ type SEOAnalysisResult struct {
 	TotalLinks      int
 	InternalLinks   int
 	ExternalLinks   int
-	BrokenLinks     []string
+	BrokenLinks     []BrokenLink
 	HasLoginForm    bool
 	FormCount       int
 	LoadTime        float64
@@ -270,26 +278,37 @@ func (s *SEOAnalyzer) analyzeLinks(doc *goquery.Document, baseURL *url.URL, resu
 	}
 	
 	for _, link := range allLinks {
-		if s.isLinkBroken(link) {
-			result.BrokenLinks = append(result.BrokenLinks, link)
+		if brokenLink := s.checkLinkStatus(link); brokenLink != nil {
+			result.BrokenLinks = append(result.BrokenLinks, *brokenLink)
 		}
 	}
 }
 
-// isLinkBroken checks if a link returns an error status
-func (s *SEOAnalyzer) isLinkBroken(link string) bool {
+// checkLinkStatus checks if a link is broken and returns details
+func (s *SEOAnalyzer) checkLinkStatus(link string) *BrokenLink {
 	// Create a new client with shorter timeout for link checking
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
-	
+
 	resp, err := client.Head(link)
 	if err != nil {
-		return true
+		return &BrokenLink{
+			URL:        link,
+			StatusCode: 0,
+			Error:      err.Error(),
+		}
 	}
 	defer resp.Body.Close()
-	
-	return resp.StatusCode >= 400
+
+	if resp.StatusCode >= 400 {
+		return &BrokenLink{
+			URL:        link,
+			StatusCode: resp.StatusCode,
+		}
+	}
+
+	return nil
 }
 
 // analyzeForms analyzes forms on the page and detects login forms
@@ -338,8 +357,17 @@ func (s *SEOAnalyzer) ConvertToJSONStrings(result *SEOAnalysisResult) (map[strin
 	h4JSON, _ := json.Marshal(result.H4Tags)
 	h5JSON, _ := json.Marshal(result.H5Tags)
 	h6JSON, _ := json.Marshal(result.H6Tags)
-	brokenLinksJSON, _ := json.Marshal(result.BrokenLinks)
-	
+	// Convert broken links to the format expected by the frontend
+	var brokenLinksInfo []models.BrokenLinkInfo
+	for _, bl := range result.BrokenLinks {
+		brokenLinksInfo = append(brokenLinksInfo, models.BrokenLinkInfo{
+			URL:        bl.URL,
+			StatusCode: bl.StatusCode,
+			Error:      bl.Error,
+		})
+	}
+	brokenLinksJSON, _ := json.Marshal(brokenLinksInfo)
+
 	jsonStrings["h1_tags"] = string(h1JSON)
 	jsonStrings["h2_tags"] = string(h2JSON)
 	jsonStrings["h3_tags"] = string(h3JSON)

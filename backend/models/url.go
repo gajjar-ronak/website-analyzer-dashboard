@@ -128,13 +128,20 @@ type HeadingTags struct {
 	H6Count int    `json:"h6_count"`
 }
 
+// BrokenLinkInfo represents a broken link with status information
+type BrokenLinkInfo struct {
+	URL        string `json:"url"`
+	StatusCode int    `json:"status_code"`
+	Error      string `json:"error,omitempty"`
+}
+
 // LinkAnalysis represents link analysis data
 type LinkAnalysis struct {
-	TotalLinks      int      `json:"total_links"`
-	InternalLinks   int      `json:"internal_links"`
-	ExternalLinks   int      `json:"external_links"`
-	BrokenLinks     int      `json:"broken_links"`
-	BrokenLinksList []string `json:"broken_links_list"`
+	TotalLinks      int               `json:"total_links"`
+	InternalLinks   int               `json:"internal_links"`
+	ExternalLinks   int               `json:"external_links"`
+	BrokenLinks     int               `json:"broken_links"`
+	BrokenLinksList []BrokenLinkInfo  `json:"broken_links_list"`
 }
 
 // FormAnalysis represents form analysis data
@@ -152,7 +159,8 @@ type Performance struct {
 // ToResponse converts URL model to URLResponse
 func (u *URL) ToResponse() URLResponse {
 	// Parse JSON strings back to arrays
-	var h1Tags, h2Tags, h3Tags, h4Tags, h5Tags, h6Tags, brokenLinksList []string
+	var h1Tags, h2Tags, h3Tags, h4Tags, h5Tags, h6Tags []string
+	var brokenLinksList []BrokenLinkInfo
 
 	// Parse heading tags
 	if u.H1Tags != "" {

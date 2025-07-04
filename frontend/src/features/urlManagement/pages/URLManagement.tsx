@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../../components/Button';
 import Select from '../../../components/Select';
+import Pagination from '../../../components/Pagination';
 import { AddURLDialog, URLTable } from '../../dashboard/components';
 import { useURLsList, useDeleteURL, useAnalyzeURL } from '../../../hooks';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -12,6 +13,8 @@ interface URLFilters {
   status: 'all' | 'pending' | 'analyzing' | 'completed' | 'failed';
   page: number;
   limit: number;
+  sort_by: string;
+  sort_order: 'asc' | 'desc';
 }
 
 const URLManagement: React.FC = () => {
@@ -20,7 +23,9 @@ const URLManagement: React.FC = () => {
     search: '',
     status: 'all',
     page: 1,
-    limit: 20,
+    limit: 10,
+    sort_by: 'created_at',
+    sort_order: 'desc',
   });
 
   // Debounce search to prevent excessive API calls
@@ -32,6 +37,8 @@ const URLManagement: React.FC = () => {
     limit: filters.limit,
     search: debouncedSearch,
     status: filters.status,
+    sort_by: filters.sort_by,
+    sort_order: filters.sort_order,
   });
   const deleteURLMutation = useDeleteURL();
   const analyzeURLMutation = useAnalyzeURL();
@@ -73,6 +80,22 @@ const URLManagement: React.FC = () => {
       ...prev,
       status: value as URLFilters['status'],
       page: 1, // Reset to first page when filtering
+    }));
+  };
+
+  const handleSort = (field: string) => {
+    setFilters(prev => ({
+      ...prev,
+      sort_by: field,
+      sort_order: prev.sort_by === field && prev.sort_order === 'asc' ? 'desc' : 'asc',
+      page: 1, // Reset to first page when sorting
+    }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters(prev => ({
+      ...prev,
+      page,
     }));
   };
 
@@ -155,7 +178,20 @@ const URLManagement: React.FC = () => {
         loading={isLoading}
         onDelete={handleDeleteURL}
         onCheck={handleAnalyzeURL}
+        sortBy={filters.sort_by}
+        sortOrder={filters.sort_order}
+        onSort={handleSort}
       />
+
+      {/* Pagination */}
+      {urlsData?.pagination && urlsData.pagination.total_pages > 1 && (
+        <Pagination
+          currentPage={urlsData.pagination.page}
+          totalPages={urlsData.pagination.total_pages}
+          onPageChange={handlePageChange}
+          className='rounded-lg border border-gray-200'
+        />
+      )}
 
       {/* Loading states for mutations */}
       {(deleteURLMutation.isPending || analyzeURLMutation.isPending) && (

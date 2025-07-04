@@ -109,8 +109,10 @@ func (ctrl *URLController) GetAllURLs(c *gin.Context) {
 
 	// Parse filter parameters
 	filters := services.URLFilters{
-		Search: c.Query("search"),
-		Status: c.Query("status"),
+		Search:    c.Query("search"),
+		Status:    c.Query("status"),
+		SortBy:    c.Query("sort_by"),
+		SortOrder: c.Query("sort_order"),
 	}
 
 	urls, total, err := ctrl.urlService.GetAllURLs(page, limit, filters)

@@ -65,8 +65,10 @@ func (s *URLService) GetURLByID(id uint) (*models.URL, error) {
 
 // URLFilters represents filters for URL queries
 type URLFilters struct {
-	Search string
-	Status string
+	Search    string
+	Status    string
+	SortBy    string
+	SortOrder string
 }
 
 // GetAllURLs retrieves all URLs with pagination, search, and filtering
@@ -96,8 +98,32 @@ func (s *URLService) GetAllURLs(page, limit int, filters URLFilters) ([]models.U
 	// Calculate offset
 	offset := (page - 1) * limit
 
-	// Get paginated results with filters
-	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&urls).Error; err != nil {
+	// Apply sorting
+	orderClause := "created_at DESC" // default sorting
+	if filters.SortBy != "" {
+		validSortFields := map[string]string{
+			"created_at":       "created_at",
+			"title":           "title",
+			"url":             "url",
+			"status":          "status",
+			"html_version":    "html_version",
+			"internal_links":  "internal_links",
+			"external_links":  "external_links",
+			"load_time":       "load_time",
+			"page_size":       "page_size",
+		}
+
+		if dbField, exists := validSortFields[filters.SortBy]; exists {
+			sortOrder := "ASC"
+			if filters.SortOrder == "desc" {
+				sortOrder = "DESC"
+			}
+			orderClause = fmt.Sprintf("%s %s", dbField, sortOrder)
+		}
+	}
+
+	// Get paginated results with filters and sorting
+	if err := query.Offset(offset).Limit(limit).Order(orderClause).Find(&urls).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to get URLs: %w", err)
 	}
 

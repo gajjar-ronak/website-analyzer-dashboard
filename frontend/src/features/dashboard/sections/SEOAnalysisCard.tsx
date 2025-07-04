@@ -6,6 +6,7 @@
 import React from 'react';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../utils/cn';
+import DonutChart from '../../../components/DonutChart';
 import type { DashboardURL } from '../types';
 
 interface SEOAnalysisCardProps {
@@ -94,30 +95,54 @@ export const SEOAnalysisCard: React.FC<SEOAnalysisCardProps> = ({ url }) => {
             {/* Link Analysis */}
             <div>
               <h4 className='text-xs font-medium text-gray-900 mb-2'>Link Analysis</h4>
-              <div className='grid grid-cols-2 lg:grid-cols-4 gap-2'>
-                <div className='text-center p-2 bg-blue-50 rounded-md'>
-                  <div className='text-sm font-semibold text-blue-900'>
-                    {seo_analysis.link_analysis.total_links}
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+                {/* Statistics Cards */}
+                <div className='grid grid-cols-2 gap-2'>
+                  <div className='text-center p-2 bg-blue-50 rounded-md'>
+                    <div className='text-sm font-semibold text-blue-900'>
+                      {seo_analysis.link_analysis.total_links}
+                    </div>
+                    <div className='text-xs text-blue-600'>Total</div>
                   </div>
-                  <div className='text-xs text-blue-600'>Total</div>
+                  <div className='text-center p-2 bg-green-50 rounded-md'>
+                    <div className='text-sm font-semibold text-green-900'>
+                      {seo_analysis.link_analysis.internal_links}
+                    </div>
+                    <div className='text-xs text-green-600'>Internal</div>
+                  </div>
+                  <div className='text-center p-2 bg-purple-50 rounded-md'>
+                    <div className='text-sm font-semibold text-purple-900'>
+                      {seo_analysis.link_analysis.external_links}
+                    </div>
+                    <div className='text-xs text-purple-600'>External</div>
+                  </div>
+                  <div className='text-center p-2 bg-red-50 rounded-md'>
+                    <div className='text-sm font-semibold text-red-900'>
+                      {seo_analysis.link_analysis.broken_links}
+                    </div>
+                    <div className='text-xs text-red-600'>Broken</div>
+                  </div>
                 </div>
-                <div className='text-center p-2 bg-green-50 rounded-md'>
-                  <div className='text-sm font-semibold text-green-900'>
-                    {seo_analysis.link_analysis.internal_links}
-                  </div>
-                  <div className='text-xs text-green-600'>Internal</div>
-                </div>
-                <div className='text-center p-2 bg-purple-50 rounded-md'>
-                  <div className='text-sm font-semibold text-purple-900'>
-                    {seo_analysis.link_analysis.external_links}
-                  </div>
-                  <div className='text-xs text-purple-600'>External</div>
-                </div>
-                <div className='text-center p-2 bg-red-50 rounded-md'>
-                  <div className='text-sm font-semibold text-red-900'>
-                    {seo_analysis.link_analysis.broken_links}
-                  </div>
-                  <div className='text-xs text-red-600'>Broken</div>
+
+                {/* Donut Chart for Internal vs External Links */}
+                <div className='flex items-center justify-center'>
+                  <DonutChart
+                    data={[
+                      {
+                        name: 'Internal Links',
+                        value: seo_analysis.link_analysis.internal_links,
+                        color: '#10b981', // green-500
+                      },
+                      {
+                        name: 'External Links',
+                        value: seo_analysis.link_analysis.external_links,
+                        color: '#8b5cf6', // purple-500
+                      },
+                    ]}
+                    size='sm'
+                    showLegend={true}
+                    showTooltip={true}
+                  />
                 </div>
               </div>
             </div>

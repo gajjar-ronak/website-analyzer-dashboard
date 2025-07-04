@@ -9,8 +9,14 @@
 export const dashboardQueryKeys = {
   all: ['dashboard'] as const,
   urls: () => [...dashboardQueryKeys.all, 'urls'] as const,
-  urlsList: (params?: { page?: number; limit?: number; search?: string; status?: string }) =>
-    [...dashboardQueryKeys.urls(), 'list', params] as const,
+  urlsList: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+  }) => [...dashboardQueryKeys.urls(), 'list'] as const,
   url: (id: number) => [...dashboardQueryKeys.urls(), 'detail', id] as const,
   recentUrls: () => [...dashboardQueryKeys.urls(), 'recent'] as const,
   stats: () => [...dashboardQueryKeys.all, 'stats'] as const,

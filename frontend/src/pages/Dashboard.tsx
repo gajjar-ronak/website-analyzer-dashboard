@@ -1,28 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   GlobeAltIcon,
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  PlusIcon,
 } from '@heroicons/react/24/outline';
 import { useDashboardData } from '../hooks';
-import { RecentURLs, AddURLDialog } from '../features/dashboard/components';
+import { RecentURLs } from '../features/dashboard/components';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { Button } from '../components/Button';
 
 /**
  * Dashboard component
  * Displays overview statistics and recent URLs with real-time data
  */
 const Dashboard: React.FC = () => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
   const { data: dashboardData, isLoading, error } = useDashboardData();
-
-  const handleAddURLSuccess = () => {
-    // Dialog will close automatically, no additional action needed
-    console.log('URL added successfully from dashboard');
-  };
 
   // Prepare stats data from API response
   const stats = React.useMemo(() => {
@@ -164,16 +156,6 @@ const Dashboard: React.FC = () => {
               Overview of your website analysis and monitoring
             </p>
           </div>
-          <div className='flex-shrink-0'>
-            <Button
-              onClick={() => setShowAddDialog(true)}
-              size='sm'
-              className='inline-flex items-center text-xs'
-            >
-              <PlusIcon className='mr-1.5 h-3.5 w-3.5' />
-              Add URL
-            </Button>
-          </div>
         </div>
 
         {/* Stats */}
@@ -206,13 +188,6 @@ const Dashboard: React.FC = () => {
         <ErrorBoundary>
           <RecentURLs urls={dashboardData?.recentURLs || []} />
         </ErrorBoundary>
-
-        {/* Add URL Dialog */}
-        <AddURLDialog
-          isOpen={showAddDialog}
-          onClose={() => setShowAddDialog(false)}
-          onSuccess={handleAddURLSuccess}
-        />
       </div>
     </ErrorBoundary>
   );

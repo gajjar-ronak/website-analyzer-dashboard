@@ -16,11 +16,13 @@ export const useAnalyzeURL = () => {
 
   return useMutation({
     mutationFn: (id: number) => dashboardApi.analyzeURL(id),
-    onSuccess: (data, id) => {
+    onSuccess: (_, id) => {
       toast.success('URL analysis started');
-      // Invalidate the specific URL and dashboard data
+      // Invalidate the specific URL, URLs list, and dashboard data
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.url(id) });
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.urlsList() });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.dashboardData() });
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.recentUrls() });
     },
     onError: () => {
       toast.error('Failed to start URL analysis');

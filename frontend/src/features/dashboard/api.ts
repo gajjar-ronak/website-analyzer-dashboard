@@ -34,6 +34,8 @@ export const dashboardApi = {
     limit?: number;
     search?: string;
     status?: string;
+    sort_by?: string;
+    sort_order?: string;
   }): Promise<URLsListResponse> => {
     const queryParams: Record<string, any> = {
       page: params?.page || 1,
@@ -48,6 +50,14 @@ export const dashboardApi = {
     // Add status filter if provided and not 'all'
     if (params?.status && params.status !== 'all') {
       queryParams.status = params.status;
+    }
+
+    // Add sorting parameters if provided
+    if (params?.sort_by) {
+      queryParams.sort_by = params.sort_by;
+    }
+    if (params?.sort_order) {
+      queryParams.sort_order = params.sort_order;
     }
 
     // Debug logging in development

@@ -10,13 +10,13 @@ import {
   XCircleIcon,
   ClockIcon,
   ChartBarIcon,
-  ExclamationTriangleIcon,
   EyeIcon,
   TrashIcon,
   PlayIcon,
   ArrowTopRightOnSquareIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
-import { formatDistanceToNow } from 'date-fns';
 import { Button } from '../../../components/Button';
 import { cn } from '../../../utils/cn';
 import type { DashboardURL } from '../types';
@@ -27,6 +27,9 @@ interface URLTableProps {
   onView?: (url: DashboardURL) => void;
   onDelete?: (url: DashboardURL) => void;
   onCheck?: (url: DashboardURL) => void;
+  sortBy?: string;
+  sortOrder?: string;
+  onSort?: (field: string) => void;
 }
 
 const getStatusIcon = (status: DashboardURL['status']) => {
@@ -80,11 +83,50 @@ export const URLTable: React.FC<URLTableProps> = ({
   onView,
   onDelete,
   onCheck,
+  sortBy,
+  sortOrder,
+  onSort,
 }) => {
   const navigate = useNavigate();
 
   const handleTitleClick = (url: DashboardURL) => {
     navigate(`/url-details/${url.id}`);
+  };
+
+  const SortableHeader: React.FC<{
+    field: string;
+    children: React.ReactNode;
+    className?: string;
+  }> = ({ field, children, className }) => {
+    const isActive = sortBy === field;
+    const isAsc = sortOrder === 'asc';
+
+    return (
+      <th
+        className={cn(
+          'px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+          className
+        )}
+        onClick={() => onSort?.(field)}
+      >
+        <div className='flex items-center space-x-1'>
+          <span>{children}</span>
+          {onSort && (
+            <div className='flex flex-col'>
+              <ChevronUpIcon
+                className={cn('h-3 w-3', isActive && isAsc ? 'text-primary-600' : 'text-gray-400')}
+              />
+              <ChevronDownIcon
+                className={cn(
+                  'h-3 w-3 -mt-1',
+                  isActive && !isAsc ? 'text-primary-600' : 'text-gray-400'
+                )}
+              />
+            </div>
+          )}
+        </div>
+      </th>
+    );
   };
   if (loading) {
     return (
@@ -127,27 +169,36 @@ export const URLTable: React.FC<URLTableProps> = ({
         <table className='min-w-full divide-y divide-gray-200'>
           <thead className='bg-gray-50'>
             <tr>
-              <th className='px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <SortableHeader field='title' className='min-w-[20rem]'>
                 URL
-              </th>
-              <th className='hidden lg:table-cell px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              </SortableHeader>
+              <SortableHeader field='html_version' className='w-36 text-center'>
+                HTML Version
+              </SortableHeader>
+              <SortableHeader field='internal_links' className='w-32 text-center'>
+                Internal Links
+              </SortableHeader>
+              <SortableHeader field='external_links' className='w-32 text-center'>
+                External Links
+              </SortableHeader>
+              <SortableHeader field='load_time' className='w-48'>
                 Performance
-              </th>
-              <th className='hidden md:table-cell px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              </SortableHeader>
+              <th className='px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-52'>
                 Last Updated
               </th>
-              <th className='hidden sm:table-cell px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-4 py-3 sm:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36'>
                 Status
               </th>
-              <th className='px-4 py-3 sm:px-6 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='px-4 py-3 sm:px-6 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-40'>
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className='bg-white divide-y divide-gray-200'>
             {urls.map(url => (
-              <tr key={url.id} className='hover:bg-gray-50 transition-colors'>
-                <td className='px-4 py-4 sm:px-6'>
+              <tr key={url.id} className='hover:bg-gray-50 transition-colors h-20'>
+                <td className='px-4 py-6 sm:px-6 w-80'>
                   <div className='flex items-start space-x-3'>
                     <div className='flex-shrink-0 mt-1'>{getStatusIcon(url.status)}</div>
                     <div className='min-w-0 flex-1'>
@@ -180,7 +231,28 @@ export const URLTable: React.FC<URLTableProps> = ({
                     </div>
                   </div>
                 </td>
-                <td className='hidden lg:table-cell px-4 py-4 sm:px-6 text-sm text-gray-900'>
+                <td className='px-4 py-6 sm:px-6 text-sm text-gray-900 w-32 text-center'>
+                  {url.status === 'completed' && url.seo_analysis?.html_version ? (
+                    <span className='text-sm'>{url.seo_analysis.html_version}</span>
+                  ) : (
+                    <span className='text-gray-400'>-</span>
+                  )}
+                </td>
+                <td className='px-4 py-6 sm:px-6 text-sm text-gray-900 w-28 text-center'>
+                  {url.status === 'completed' && url.seo_analysis?.link_analysis ? (
+                    <span className='text-sm'>{url.seo_analysis.link_analysis.internal_links}</span>
+                  ) : (
+                    <span className='text-gray-400'>-</span>
+                  )}
+                </td>
+                <td className='px-4 py-6 sm:px-6 text-sm text-gray-900 w-28 text-center'>
+                  {url.status === 'completed' && url.seo_analysis?.link_analysis ? (
+                    <span className='text-sm'>{url.seo_analysis.link_analysis.external_links}</span>
+                  ) : (
+                    <span className='text-gray-400'>-</span>
+                  )}
+                </td>
+                <td className='px-4 py-6 sm:px-6 text-sm text-gray-900 w-40'>
                   {url.status === 'completed' ? (
                     <div className='space-y-1'>
                       <div>Load: {formatLoadTime(url.performance.load_time)}</div>
@@ -192,14 +264,14 @@ export const URLTable: React.FC<URLTableProps> = ({
                     <span className='text-gray-400'>-</span>
                   )}
                 </td>
-                <td className='hidden md:table-cell px-4 py-4 sm:px-6 text-sm text-gray-500'>
+                <td className='px-4 py-6 sm:px-6 text-sm text-gray-500 w-44'>
                   {url.analyzed_at || url.created_at ? (
                     <>{new Date(url.analyzed_at || url.created_at).toLocaleString()} </>
                   ) : (
                     '-'
                   )}
                 </td>
-                <td className='hidden sm:table-cell px-4 py-4 sm:px-6'>
+                <td className='px-4 py-6 sm:px-6 w-32'>
                   <div className='flex flex-col space-y-1'>
                     {getStatusBadge(url.status)}
                     {url.status_code > 0 && (
@@ -207,7 +279,7 @@ export const URLTable: React.FC<URLTableProps> = ({
                     )}
                   </div>
                 </td>
-                <td className='px-4 py-4 sm:px-6 text-right text-sm font-medium'>
+                <td className='px-4 py-6 sm:px-6 text-right text-sm font-medium w-36'>
                   <div className='flex items-center justify-end space-x-2'>
                     {onView && (
                       <Button
