@@ -16,16 +16,28 @@ export const useAnalyzeURL = () => {
 
   return useMutation({
     mutationFn: (id: number) => dashboardApi.analyzeURL(id),
+    onMutate: async id => {
+      // Cancel any outgoing refetches for this URL
+      await queryClient.cancelQueries({ queryKey: dashboardQueryKeys.url(id) });
+
+      // Optimistically update the URL status to 'analyzing'
+      queryClient.setQueryData(dashboardQueryKeys.url(id), (old: any) => {
+        if (!old) return old;
+        return { ...old, status: 'analyzing' };
+      });
+    },
     onSuccess: (_, id) => {
       toast.success('URL analysis started');
-      // Invalidate the specific URL, URLs list, and dashboard data
+      // Invalidate and refetch the specific URL immediately
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.url(id) });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.urlsList() });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.dashboardData() });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.recentUrls() });
     },
-    onError: () => {
+    onError: (_, id) => {
       toast.error('Failed to start URL analysis');
+      // Revert the optimistic update on error
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.url(id) });
     },
   });
 };

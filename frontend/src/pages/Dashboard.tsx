@@ -7,7 +7,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { useDashboardData } from '../hooks';
 import { RecentURLs } from '../features/dashboard/components';
-import { ErrorBoundary } from '../components/ErrorBoundary';
 
 /**
  * Dashboard component
@@ -146,7 +145,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <ErrorBoundary>
+    <>
       <div className='space-y-3 sm:space-y-4'>
         {/* Header */}
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
@@ -185,11 +184,9 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Recent URLs */}
-        <ErrorBoundary>
-          <RecentURLs urls={dashboardData?.recentURLs || []} />
-        </ErrorBoundary>
+        <RecentURLs urls={dashboardData?.recentURLs || []} />
       </div>
-    </ErrorBoundary>
+    </>
   );
 };
 

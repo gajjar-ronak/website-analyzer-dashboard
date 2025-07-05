@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   PlusIcon,
@@ -10,6 +10,7 @@ import {
 import { Button } from '../../../components/Button';
 import Select from '../../../components/Select';
 import Pagination from '../../../components/Pagination';
+import { ConfirmationDialog } from '../../../components/ConfirmationDialog';
 import { AddURLDialog } from '../../dashboard/components';
 import URLTable from '../components/URLTable';
 import BulkImportDialog from '../components/BulkImportDialog';
@@ -34,6 +35,7 @@ const URLManagement: React.FC = () => {
   const [selectedURLIds, setSelectedURLIds] = useState<number[]>([]);
   const [analyzingURLIds, setAnalyzingURLIds] = useState<number[]>([]);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [urlToDelete, setUrlToDelete] = useState<DashboardURL | null>(null);
   const [filters, setFilters] = useState<URLFilters>({
     search: '',
     status: 'all',
@@ -61,15 +63,35 @@ const URLManagement: React.FC = () => {
   const bulkAnalyzeMutation = useBulkAnalyzeURLs();
   const bulkImportMutation = useBulkImportURLs();
 
-  const handleDeleteURL = async (url: DashboardURL) => {
-    const urlTitle = url.title || url.url;
-    if (window.confirm(`Are you sure you want to delete "${urlTitle}"?`)) {
-      try {
-        await deleteURLMutation.mutateAsync(url.id);
-      } catch (error) {
-        console.error('Failed to delete URL:', error);
-      }
+  // Clean up analyzing state when URLs are no longer analyzing
+  useEffect(() => {
+    if (urlsData?.data) {
+      setAnalyzingURLIds(prev =>
+        prev.filter(id => {
+          const url = urlsData.data.find(u => u.id === id);
+          return url?.status === 'analyzing';
+        })
+      );
     }
+  }, [urlsData?.data]);
+
+  const handleDeleteURL = (url: DashboardURL) => {
+    setUrlToDelete(url);
+  };
+
+  const confirmDeleteURL = async () => {
+    if (!urlToDelete) return;
+
+    try {
+      await deleteURLMutation.mutateAsync(urlToDelete.id);
+      setUrlToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete URL:', error);
+    }
+  };
+
+  const cancelDeleteURL = () => {
+    setUrlToDelete(null);
   };
 
   const handleAnalyzeURL = async (url: DashboardURL) => {
@@ -119,10 +141,17 @@ const URLManagement: React.FC = () => {
   const handleBulkAnalyze = async () => {
     if (selectedURLIds.length === 0) return;
 
+    // Immediately add selected URLs to analyzing state
+    setAnalyzingURLIds(prev => [...prev, ...selectedURLIds]);
+
     try {
       await bulkAnalyzeMutation.mutateAsync(selectedURLIds);
+      // Clear selection after successful bulk analysis
+      setSelectedURLIds([]);
     } catch (error) {
       console.error('Failed to bulk analyze URLs:', error);
+      // Remove from analyzing state on error
+      setAnalyzingURLIds(prev => prev.filter(id => !selectedURLIds.includes(id)));
     }
   };
 
@@ -131,10 +160,18 @@ const URLManagement: React.FC = () => {
   };
 
   const handleImportFile = async (file: File) => {
-    const result = await bulkImportMutation.mutateAsync(file);
-    console.log('Import result:', result);
-    // Don't close dialog here - let the dialog handle it based on result
-    return result;
+    try {
+      // Close dialog immediately and show loading in table
+      setIsBulkImportOpen(false);
+
+      const result = await bulkImportMutation.mutateAsync(file);
+      console.log('Import result:', result);
+
+      return result;
+    } catch (error) {
+      console.error('Import failed:', error);
+      throw error;
+    }
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +220,7 @@ const URLManagement: React.FC = () => {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
         <div className='min-w-0 flex-1 mb-4'>
           <h1 className='text-base font-semibold text-gray-900 sm:text-lg'>URL Management</h1>
-          <p className='mt-0.5 text-[12px] text-gray-600'>Monitor and manage your website URLs</p>
+          <p className='mt-0.5 text-[13px] text-gray-600'>Monitor and manage your website URLs</p>
           {selectedURLIds.length > 0 && (
             <p className='mt-0.5 text-[11px] text-blue-600'>
               {selectedURLIds.length} URL{selectedURLIds.length !== 1 ? 's' : ''} selected
@@ -191,23 +228,35 @@ const URLManagement: React.FC = () => {
           )}
         </div>
 
-        <div className='flex items-center space-x-1'>
-          {/* Bulk Import Button */}
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={handleBulkImport}
-            disabled={
-              deleteURLMutation.isPending ||
-              analyzeURLMutation.isPending ||
-              bulkDeleteMutation.isPending ||
-              bulkAnalyzeMutation.isPending
-            }
-            className='flex items-center space-x-1 px-2 py-1 text-[11px] h-7'
-          >
-            <DocumentArrowUpIcon className='h-3 w-3' />
-            <span>Bulk Import</span>
-          </Button>
+        <div className='flex items-center space-x-2'>
+          {/* Bulk Import Button - only show when no URLs are selected */}
+          {selectedURLIds.length === 0 && (
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleBulkImport}
+              disabled={
+                deleteURLMutation.isPending ||
+                analyzeURLMutation.isPending ||
+                bulkDeleteMutation.isPending ||
+                bulkAnalyzeMutation.isPending ||
+                bulkImportMutation.isPending
+              }
+              className='flex items-center space-x-1 px-2 py-1 text-[11px] h-7'
+            >
+              {bulkImportMutation.isPending ? (
+                <>
+                  <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600' />
+                  <span>Importing...</span>
+                </>
+              ) : (
+                <>
+                  <DocumentArrowUpIcon className='h-3 w-3' />
+                  <span>Bulk Import</span>
+                </>
+              )}
+            </Button>
+          )}
 
           {/* Bulk Operations - only show when URLs are selected */}
           {selectedURLIds.length > 0 && (
@@ -220,7 +269,8 @@ const URLManagement: React.FC = () => {
                   deleteURLMutation.isPending ||
                   analyzeURLMutation.isPending ||
                   bulkDeleteMutation.isPending ||
-                  bulkAnalyzeMutation.isPending
+                  bulkAnalyzeMutation.isPending ||
+                  bulkImportMutation.isPending
                 }
                 className='flex items-center space-x-1 px-2 py-1 text-blue-600 border-blue-300 hover:bg-blue-50 text-[11px] h-7'
               >
@@ -245,7 +295,8 @@ const URLManagement: React.FC = () => {
                   deleteURLMutation.isPending ||
                   analyzeURLMutation.isPending ||
                   bulkDeleteMutation.isPending ||
-                  bulkAnalyzeMutation.isPending
+                  bulkAnalyzeMutation.isPending ||
+                  bulkImportMutation.isPending
                 }
                 className='flex items-center space-x-1 px-2 py-1 text-red-600 border-red-300 hover:bg-red-50 text-[11px] h-7'
               >
@@ -268,9 +319,9 @@ const URLManagement: React.FC = () => {
           <Button
             onClick={() => setShowAddDialog(true)}
             size='sm'
-            className='inline-flex items-center text-[11px] px-2 py-1 h-7'
+            className='inline-flex items-center text-[11px] h-8'
           >
-            <PlusIcon className='mr-1 h-3 w-3' />
+            <PlusIcon className='h-4 w-3' />
             Add URL
           </Button>
         </div>
@@ -315,7 +366,7 @@ const URLManagement: React.FC = () => {
                 onChange={handleStatusFilterChange}
                 options={statusOptions}
                 size='sm'
-                className='max-w-[180px] text-[10px]'
+                className='max-w-[180px] text-xs h-[44px]'
               />
             </div>
           </div>
@@ -325,7 +376,7 @@ const URLManagement: React.FC = () => {
       {/* URLs Table */}
       <URLTable
         urls={urlsData?.data || []}
-        loading={isLoading}
+        loading={isLoading || bulkDeleteMutation.isPending || bulkImportMutation.isPending}
         selectedIds={selectedURLIds}
         analyzingIds={analyzingURLIds}
         sortBy={filters.sort_by}
@@ -419,6 +470,19 @@ const URLManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={!!urlToDelete}
+        onClose={cancelDeleteURL}
+        onConfirm={confirmDeleteURL}
+        title='Delete URL'
+        message={`Are you sure you want to delete "${urlToDelete?.title || urlToDelete?.url}"?`}
+        confirmText='Delete'
+        cancelText='Cancel'
+        confirmVariant='destructive'
+        loading={deleteURLMutation.isPending}
+      />
     </>
   );
 };

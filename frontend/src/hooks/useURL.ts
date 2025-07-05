@@ -16,13 +16,15 @@ export const useURL = (id: number) => {
     queryKey: dashboardQueryKeys.url(id),
     queryFn: () => dashboardApi.getURL(id),
     enabled: !!id, // Only run if ID is provided
-    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
+    staleTime: 10 * 1000, // 10 seconds - more responsive for analysis updates
     gcTime: 2 * 60 * 1000, // 2 minutes
-    refetchInterval: data => {
-      // Poll every 5 seconds if URL is analyzing, otherwise don't poll
-      return data?.status === 'analyzing' ? 5 * 1000 : false;
+    refetchInterval: (data: any) => {
+      // Poll every 2 seconds if URL is analyzing, otherwise don't poll
+      return data?.status === 'analyzing' ? 2 * 1000 : false;
     },
     refetchIntervalInBackground: true, // Continue polling even when tab is not active
+    // Refetch on window focus to catch updates when returning to the page
+    refetchOnWindowFocus: true,
   });
 
   return query;

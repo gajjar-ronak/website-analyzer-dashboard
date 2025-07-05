@@ -164,15 +164,6 @@ const URLTable: React.FC<URLTableProps> = ({
               </th>
               <th
                 className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
-                onClick={() => handleSort('status')}
-              >
-                <div className='flex items-center space-x-1'>
-                  <span>Status</span>
-                  {getSortIcons('status')}
-                </div>
-              </th>
-              <th
-                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
                 onClick={() => handleSort('title')}
               >
                 <div className='flex items-center space-x-1'>
@@ -188,6 +179,15 @@ const URLTable: React.FC<URLTableProps> = ({
               </th>
               <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
                 External Links
+              </th>
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
+                onClick={() => handleSort('status')}
+              >
+                <div className='flex items-center space-x-1'>
+                  <span>Status</span>
+                  {getSortIcons('status')}
+                </div>
               </th>
               {/* <th
                 className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
@@ -214,12 +214,6 @@ const URLTable: React.FC<URLTableProps> = ({
                     onChange={e => onSelectUrl?.(url.id, e.target.checked)}
                   />
                 </td>
-                <td className='px-2 py-2 whitespace-nowrap'>
-                  <div className='flex items-center'>
-                    {getStatusIcon(url.status)}
-                    <div className='ml-2'>{getStatusBadge(url.status)}</div>
-                  </div>
-                </td>
                 <td className='px-2 py-2'>
                   <div className='flex flex-col'>
                     <button
@@ -244,6 +238,12 @@ const URLTable: React.FC<URLTableProps> = ({
                 </td>
                 <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
                   {url.seo_analysis?.link_analysis?.external_links || 0}
+                </td>
+                <td className='px-2 py-2 whitespace-nowrap'>
+                  <div className='flex items-center'>
+                    {getStatusIcon(url.status)}
+                    <div className='ml-2'>{getStatusBadge(url.status)}</div>
+                  </div>
                 </td>
                 {/* <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-500'>
                   <div className='flex flex-col'>

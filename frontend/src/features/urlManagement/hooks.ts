@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { mockURLs, urlApi } from './api';
 import type {
   URL,
@@ -169,9 +170,13 @@ export const useBulkAnalyzeURLs = () => {
     mutationFn: async (ids: number[]): Promise<void> => {
       return urlApi.bulkAnalyzeURLs(ids);
     },
-    onSuccess: () => {
+    onSuccess: (_, ids) => {
+      toast.success(`Analysis started for ${ids.length} URL${ids.length > 1 ? 's' : ''}`);
       // Invalidate and refetch URLs list
       queryClient.invalidateQueries({ queryKey: urlQueryKeys.lists() });
+    },
+    onError: () => {
+      toast.error('Failed to start bulk analysis');
     },
   });
 };
@@ -184,9 +189,23 @@ export const useBulkImportURLs = () => {
     mutationFn: async (file: File): Promise<any> => {
       return urlApi.bulkImportURLs(file);
     },
-    onSuccess: () => {
+    onSuccess: result => {
+      const importedCount = result?.data?.imported_count || 0;
+      const errorCount = result?.data?.error_count || 0;
+
+      if (errorCount === 0) {
+        toast.success(`Successfully imported ${importedCount} URL${importedCount > 1 ? 's' : ''}`);
+      } else {
+        toast.success(
+          `Imported ${importedCount} URL${importedCount > 1 ? 's' : ''} with ${errorCount} error${errorCount > 1 ? 's' : ''}`
+        );
+      }
+
       // Invalidate and refetch URLs list
       queryClient.invalidateQueries({ queryKey: urlQueryKeys.lists() });
+    },
+    onError: () => {
+      toast.error('Failed to import URLs');
     },
   });
 };
