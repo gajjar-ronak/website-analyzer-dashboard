@@ -194,7 +194,7 @@ export const useBulkImportURLs = () => {
       const errorCount = result?.data?.error_count || 0;
 
       if (errorCount === 0) {
-        toast.success(`Successfully imported ${importedCount} URL${importedCount > 1 ? 's' : ''}`);
+        toast.success(`Successfully importing URL${importedCount > 1 ? 's' : ''} started.`);
       } else {
         toast.success(
           `Imported ${importedCount} URL${importedCount > 1 ? 's' : ''} with ${errorCount} error${errorCount > 1 ? 's' : ''}`

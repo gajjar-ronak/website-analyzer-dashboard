@@ -249,3 +249,18 @@ func (u *URL) ToResponse() URLResponse {
 		UpdatedAt:  u.UpdatedAt,
 	}
 }
+
+// URLDeleteResponse represents the response format for single URL deletion
+type URLDeleteResponse struct {
+	DeletedURL   URLResponse `json:"deleted_url"`
+	DeletedCount int         `json:"deleted_count"`
+	DeletedAt    time.Time   `json:"deleted_at"`
+}
+
+// BulkDeleteResponse represents the response format for bulk URL deletion
+type BulkDeleteResponse struct {
+	DeletedURLs  []URLResponse `json:"deleted_urls"`
+	DeletedCount int           `json:"deleted_count"`
+	RequestedIDs []uint        `json:"requested_ids"`
+	DeletedAt    time.Time     `json:"deleted_at"`
+}

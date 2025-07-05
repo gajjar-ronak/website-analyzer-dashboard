@@ -316,14 +316,16 @@ const URLManagement: React.FC = () => {
           )}
 
           {/* Add URL Button */}
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            size='sm'
-            className='inline-flex items-center text-[11px] h-8'
-          >
-            <PlusIcon className='h-4 w-3' />
-            Add URL
-          </Button>
+          {selectedURLIds.length === 0 && (
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              size='sm'
+              className='inline-flex items-center text-[11px] h-8'
+            >
+              <PlusIcon className='h-4 w-3' />
+              Add URL
+            </Button>
+          )}
         </div>
       </div>
 
@@ -365,7 +367,7 @@ const URLManagement: React.FC = () => {
                 value={filters.status || 'all'}
                 onChange={handleStatusFilterChange}
                 options={statusOptions}
-                size='sm'
+                size='md'
                 className='max-w-[180px] text-xs h-[44px]'
               />
             </div>
@@ -448,24 +450,6 @@ const URLManagement: React.FC = () => {
                   )}
                 </Button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Loading states for mutations */}
-      {(deleteURLMutation.isPending ||
-        analyzeURLMutation.isPending ||
-        bulkAnalyzeMutation.isPending) && (
-        <div className='fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-md p-4 shadow-xl'>
-            <div className='flex items-center'>
-              <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2' />
-              <span className='text-xs text-gray-700'>
-                {deleteURLMutation.isPending && 'Deleting URL...'}
-                {analyzeURLMutation.isPending && 'Starting URL analysis...'}
-                {bulkAnalyzeMutation.isPending && 'Starting bulk analysis...'}
-              </span>
             </div>
           </div>
         </div>

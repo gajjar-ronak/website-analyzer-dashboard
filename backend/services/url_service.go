@@ -178,6 +178,38 @@ func (s *URLService) DeleteURL(id uint) error {
 	return nil
 }
 
+// DeleteURLWithDetails deletes a URL by ID and returns detailed information
+func (s *URLService) DeleteURLWithDetails(id uint) (*models.URLDeleteResponse, error) {
+	// First, get the URL details before deletion
+	var url models.URL
+	if err := s.db.First(&url, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("URL not found")
+		}
+		return nil, fmt.Errorf("failed to find URL: %w", err)
+	}
+
+	// Store the URL data for response
+	deletedURL := url.ToResponse()
+
+	// Delete the URL
+	result := s.db.Delete(&models.URL{}, id)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to delete URL: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.New("URL not found")
+	}
+
+	log.Printf("Successfully deleted URL: %s (ID: %d)", url.URL, url.ID)
+
+	return &models.URLDeleteResponse{
+		DeletedURL:   deletedURL,
+		DeletedCount: 1,
+		DeletedAt:    time.Now(),
+	}, nil
+}
+
 // AnalyzeURL performs analysis on a URL (placeholder for future implementation)
 func (s *URLService) AnalyzeURL(id uint) error {
 	var url models.URL
@@ -201,6 +233,38 @@ func (s *URLService) AnalyzeURL(id uint) error {
 	go s.performAnalysis(id)
 
 	return nil
+}
+
+// AnalyzeURLSync performs synchronous analysis on a URL and returns the complete result
+func (s *URLService) AnalyzeURLSync(id uint) (*models.URL, error) {
+	var url models.URL
+	if err := s.db.First(&url, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("URL not found")
+		}
+		return nil, fmt.Errorf("failed to find URL: %w", err)
+	}
+
+	// Update status to analyzing
+	if err := s.db.Model(&url).Updates(map[string]interface{}{
+		"status":     "analyzing",
+		"updated_at": time.Now(),
+	}).Error; err != nil {
+		return nil, fmt.Errorf("failed to update URL status: %w", err)
+	}
+
+	// Perform synchronous analysis
+	err := s.performAnalysisSync(id)
+	if err != nil {
+		return nil, fmt.Errorf("analysis failed: %w", err)
+	}
+
+	// Fetch the updated URL with analysis results
+	if err := s.db.First(&url, id).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch updated URL: %w", err)
+	}
+
+	return &url, nil
 }
 
 // performAnalysis performs comprehensive SEO analysis on a URL
@@ -312,6 +376,116 @@ func (s *URLService) performAnalysis(id uint) {
 	log.Printf("SEO analysis completed successfully for URL: %s", url.URL)
 }
 
+// performAnalysisSync performs comprehensive SEO analysis on a URL synchronously
+func (s *URLService) performAnalysisSync(id uint) error {
+	// Get the URL record
+	var url models.URL
+	if err := s.db.First(&url, id).Error; err != nil {
+		// Mark as failed if URL not found
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": "URL record not found",
+			"updated_at":    time.Now(),
+		})
+		return fmt.Errorf("URL record not found")
+	}
+
+	log.Printf("Starting synchronous SEO analysis for URL: %s", url.URL)
+
+	// Perform comprehensive SEO analysis
+	result, err := s.seoAnalyzer.AnalyzeURL(url.URL)
+	if err != nil {
+		// Mark as failed if analysis fails
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": fmt.Sprintf("Analysis failed: %v", err),
+			"updated_at":    time.Now(),
+		})
+		return fmt.Errorf("analysis failed: %w", err)
+	}
+
+	// Convert arrays to JSON strings for database storage
+	jsonStrings, err := s.seoAnalyzer.ConvertToJSONStrings(result)
+	if err != nil {
+		log.Printf("Failed to convert analysis results to JSON: %v", err)
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": "Failed to process analysis results",
+			"updated_at":    time.Now(),
+		})
+		return fmt.Errorf("failed to process analysis results: %w", err)
+	}
+
+	// Prepare updates with all analysis results
+	updates := map[string]interface{}{
+		"status":      "completed",
+		"status_code": result.StatusCode,
+		"analyzed_at": time.Now(),
+		"updated_at":  time.Now(),
+
+		// SEO Analysis fields
+		"html_version":     result.HTMLVersion,
+		"meta_title":       result.MetaTitle,
+		"meta_description": result.MetaDescription,
+
+		// Heading tags
+		"h1_tags":  jsonStrings["h1_tags"],
+		"h2_tags":  jsonStrings["h2_tags"],
+		"h3_tags":  jsonStrings["h3_tags"],
+		"h4_tags":  jsonStrings["h4_tags"],
+		"h5_tags":  jsonStrings["h5_tags"],
+		"h6_tags":  jsonStrings["h6_tags"],
+		"h1_count": result.H1Count,
+		"h2_count": result.H2Count,
+		"h3_count": result.H3Count,
+		"h4_count": result.H4Count,
+		"h5_count": result.H5Count,
+		"h6_count": result.H6Count,
+
+		// Link analysis
+		"image_count":        result.ImageCount,
+		"link_count":         result.TotalLinks,
+		"internal_links":     result.InternalLinks,
+		"external_links":     result.ExternalLinks,
+		"broken_links":       len(result.BrokenLinks),
+		"broken_links_list":  jsonStrings["broken_links_list"],
+
+		// Form analysis
+		"has_login_form": result.HasLoginForm,
+		"form_count":     result.FormCount,
+
+		// Performance
+		"load_time": result.LoadTime,
+		"page_size": result.PageSize,
+	}
+
+	// Add error message if there was one during analysis
+	if result.ErrorMessage != "" {
+		updates["error_message"] = result.ErrorMessage
+		// If there was an error but we got some results, mark as completed with warnings
+		if result.StatusCode > 0 {
+			updates["status"] = "completed"
+		} else {
+			updates["status"] = "failed"
+		}
+	}
+
+	// Update the database with analysis results
+	if err := s.db.Model(&models.URL{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		log.Printf("Failed to update analysis results: %v", err)
+		// If update fails, mark as failed
+		s.db.Model(&models.URL{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":        "failed",
+			"error_message": "Failed to save analysis results",
+			"updated_at":    time.Now(),
+		})
+		return fmt.Errorf("failed to save analysis results: %w", err)
+	}
+
+	log.Printf("Synchronous SEO analysis completed successfully for URL: %s", url.URL)
+	return nil
+}
+
 // BulkDeleteURLs deletes multiple URLs by their IDs
 func (s *URLService) BulkDeleteURLs(ids []uint) error {
 	if len(ids) == 0 {
@@ -349,6 +523,67 @@ func (s *URLService) BulkDeleteURLs(ids []uint) error {
 
 	log.Printf("Successfully deleted %d URLs", result.RowsAffected)
 	return nil
+}
+
+// BulkDeleteURLsWithDetails deletes multiple URLs by their IDs and returns detailed information
+func (s *URLService) BulkDeleteURLsWithDetails(ids []uint) (*models.BulkDeleteResponse, error) {
+	if len(ids) == 0 {
+		return nil, errors.New("no IDs provided")
+	}
+
+	// First, get the URLs details before deletion
+	var urls []models.URL
+	if err := s.db.Where("id IN ?", ids).Find(&urls).Error; err != nil {
+		return nil, fmt.Errorf("failed to find URLs: %w", err)
+	}
+
+	if len(urls) == 0 {
+		return nil, errors.New("no URLs found with the provided IDs")
+	}
+
+	// Store the URL data for response
+	var deletedURLs []models.URLResponse
+	for _, url := range urls {
+		deletedURLs = append(deletedURLs, url.ToResponse())
+	}
+
+	// Start a transaction
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", tx.Error)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Delete URLs in bulk
+	result := tx.Where("id IN ?", ids).Delete(&models.URL{})
+	if result.Error != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to delete URLs: %w", result.Error)
+	}
+
+	// Check if any URLs were actually deleted
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		return nil, errors.New("no URLs found with the provided IDs")
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Printf("Successfully deleted %d URLs", result.RowsAffected)
+
+	return &models.BulkDeleteResponse{
+		DeletedURLs:  deletedURLs,
+		DeletedCount: int(result.RowsAffected),
+		RequestedIDs: ids,
+		DeletedAt:    time.Now(),
+	}, nil
 }
 
 // BulkAnalyzeURLs triggers analysis for multiple URLs by their IDs

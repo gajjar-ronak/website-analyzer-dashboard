@@ -65,7 +65,8 @@ func setupURLRoutes(rg *gin.RouterGroup) {
 		urls.GET("/:id", urlController.GetURL)           // GET /api/v1/urls/:id
 		urls.PUT("/:id", urlController.UpdateURL)        // PUT /api/v1/urls/:id
 		urls.DELETE("/:id", urlController.DeleteURL)     // DELETE /api/v1/urls/:id
-		urls.POST("/:id/analyze", urlController.AnalyzeURL) // POST /api/v1/urls/:id/analyze
+		urls.POST("/:id/analyze", urlController.AnalyzeURL) // POST /api/v1/urls/:id/analyze (synchronous)
+		urls.POST("/:id/analyze-async", urlController.AnalyzeURLAsync) // POST /api/v1/urls/:id/analyze-async (asynchronous)
 
 		// Bulk operations
 		bulk := urls.Group("/bulk")

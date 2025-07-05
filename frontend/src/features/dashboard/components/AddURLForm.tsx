@@ -88,8 +88,8 @@ export const AddURLForm: React.FC<AddURLFormProps> = ({
             })}
             type='text'
             id='title'
-            placeholder='Enter website title'
-            className='block w-full py-2 px-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
+            placeholder='Google'
+            className='block w-full py-2 px-2 rounded-md border border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
             disabled={loading}
           />
           {errors.title && (
@@ -125,8 +125,8 @@ export const AddURLForm: React.FC<AddURLFormProps> = ({
             type='url'
             id='url'
             autoComplete='url'
-            placeholder='https://example.com'
-            className='block w-full py-2 px-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
+            placeholder='https://google.com'
+            className='block w-full py-2 px-2 rounded-md border border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
             disabled={loading}
           />
           {errors.url && (

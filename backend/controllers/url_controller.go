@@ -204,7 +204,8 @@ func (ctrl *URLController) DeleteURL(c *gin.Context) {
 		return
 	}
 
-	err = ctrl.urlService.DeleteURL(uint(id))
+	// Delete URL and get detailed response
+	deleteResponse, err := ctrl.urlService.DeleteURLWithDetails(uint(id))
 	if err != nil {
 		if err.Error() == "URL not found" {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -223,11 +224,48 @@ func (ctrl *URLController) DeleteURL(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "URL deleted successfully",
+		"data":    deleteResponse,
 	})
 }
 
-// AnalyzeURL handles POST /api/urls/:id/analyze
+// AnalyzeURL handles POST /api/urls/:id/analyze (synchronous analysis)
 func (ctrl *URLController) AnalyzeURL(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Bad Request",
+			"message": "Invalid URL ID",
+		})
+		return
+	}
+
+	// Perform synchronous analysis and get the complete result
+	url, err := ctrl.urlService.AnalyzeURLSync(uint(id))
+	if err != nil {
+		if err.Error() == "URL not found" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":   "Not Found",
+				"message": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Internal Server Error",
+			"message": "Failed to analyze URL",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "URL analysis completed successfully",
+		"data":    url.ToResponse(),
+	})
+}
+
+// AnalyzeURLAsync handles POST /api/urls/:id/analyze-async (asynchronous analysis)
+func (ctrl *URLController) AnalyzeURLAsync(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
@@ -280,7 +318,8 @@ func (ctrl *URLController) BulkDeleteURLs(c *gin.Context) {
 		return
 	}
 
-	err := ctrl.urlService.BulkDeleteURLs(req.IDs)
+	// Delete URLs and get detailed response
+	deleteResponse, err := ctrl.urlService.BulkDeleteURLsWithDetails(req.IDs)
 	if err != nil {
 		if err.Error() == "no URLs found with the provided IDs" {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -299,6 +338,7 @@ func (ctrl *URLController) BulkDeleteURLs(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "URLs deleted successfully",
+		"data":    deleteResponse,
 	})
 }
 

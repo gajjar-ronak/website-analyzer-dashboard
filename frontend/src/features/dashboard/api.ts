@@ -163,7 +163,7 @@ export const dashboardApi = {
   }> => {
     // Get all URLs to calculate stats and recent URLs
     const urlsResponse = await dashboardApi.getURLs({ page: 1, limit: 100 });
-    const allURLs = urlsResponse.data;
+    const allURLs = urlsResponse?.data || [];
 
     // Calculate stats from all URLs
     const stats = dashboardApi.calculateStats(allURLs);

@@ -28,8 +28,11 @@ export const useAnalyzeURL = () => {
     },
     onSuccess: (_, id) => {
       toast.success('URL analysis started');
-      // Invalidate and refetch the specific URL immediately
+
+      // Invalidate and refetch specific URL detail page
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.url(id) });
+
+      // Invalidate and refetch the specific URL immediately
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.urlsList() });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.dashboardData() });
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.recentUrls() });
