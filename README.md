@@ -4,6 +4,12 @@ A full-stack web application for analyzing websites with technical, SEO, and per
 
 Built with a **React + TypeScript** frontend and a **Golang** backend, designed with scalability, clean architecture, and industry standards in mind.
 
+## Images
+
+![Dashboard](./images/dashboard.png)
+![URL Management](./images/url-management.png)
+![URL Analysis](./images/url-details.png)
+
 ---
 
 ## 🏗️ Architecture

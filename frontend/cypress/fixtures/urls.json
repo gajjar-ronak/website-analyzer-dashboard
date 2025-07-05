@@ -1,0 +1,228 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "url": "https://example.com",
+      "title": "Example Website",
+      "description": "A sample website for testing",
+      "status": "completed",
+      "status_code": 200,
+      "seo_analysis": {
+        "meta_title": "Example Website",
+        "meta_description": "A sample website for testing",
+        "html_version": "HTML5",
+        "heading_tags": {
+          "h1_tags": "Main Title",
+          "h2_tags": "Section 1, Section 2, Section 3",
+          "h3_tags": "Subsection 1, Subsection 2, Subsection 3, Subsection 4, Subsection 5",
+          "h4_tags": "Detail 1, Detail 2",
+          "h5_tags": "",
+          "h6_tags": "",
+          "h1_count": 1,
+          "h2_count": 3,
+          "h3_count": 5,
+          "h4_count": 2,
+          "h5_count": 0,
+          "h6_count": 0
+        },
+        "link_analysis": {
+          "total_links": 23,
+          "internal_links": 15,
+          "external_links": 8,
+          "broken_links": 0,
+          "broken_links_list": []
+        },
+        "form_analysis": {
+          "has_login_form": false,
+          "form_count": 1
+        },
+        "image_count": 5
+      },
+      "performance": {
+        "load_time": 1250,
+        "page_size": 2048576
+      },
+      "analyzed_at": "2024-01-01T10:30:00Z",
+      "created_at": "2024-01-01T10:00:00Z",
+      "updated_at": "2024-01-01T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "url": "https://google.com",
+      "title": "Google",
+      "description": "Search engine",
+      "status": "completed",
+      "status_code": 200,
+      "seo_analysis": {
+        "meta_title": "Google",
+        "meta_description": "Search the world's information",
+        "html_version": "HTML5",
+        "heading_tags": {
+          "h1_tags": "Google",
+          "h2_tags": "Search, Images",
+          "h3_tags": "News, Videos, Shopping, Maps",
+          "h4_tags": "About",
+          "h5_tags": "",
+          "h6_tags": "",
+          "h1_count": 1,
+          "h2_count": 2,
+          "h3_count": 4,
+          "h4_count": 1,
+          "h5_count": 0,
+          "h6_count": 0
+        },
+        "link_analysis": {
+          "total_links": 37,
+          "internal_links": 25,
+          "external_links": 12,
+          "broken_links": 1,
+          "broken_links_list": [
+            {
+              "url": "https://google.com/broken-link",
+              "status_code": 404,
+              "error": "Not Found"
+            }
+          ]
+        },
+        "form_analysis": {
+          "has_login_form": true,
+          "form_count": 2
+        },
+        "image_count": 8
+      },
+      "performance": {
+        "load_time": 850,
+        "page_size": 1024000
+      },
+      "analyzed_at": "2024-01-02T09:45:00Z",
+      "created_at": "2024-01-02T09:00:00Z",
+      "updated_at": "2024-01-02T09:45:00Z"
+    },
+    {
+      "id": 3,
+      "url": "https://test-site.com",
+      "title": "Test Site",
+      "description": "A test website",
+      "status": "analyzing",
+      "status_code": 0,
+      "seo_analysis": {
+        "meta_title": "",
+        "meta_description": "",
+        "html_version": "",
+        "heading_tags": {
+          "h1_tags": "",
+          "h2_tags": "",
+          "h3_tags": "",
+          "h4_tags": "",
+          "h5_tags": "",
+          "h6_tags": "",
+          "h1_count": 0,
+          "h2_count": 0,
+          "h3_count": 0,
+          "h4_count": 0,
+          "h5_count": 0,
+          "h6_count": 0
+        },
+        "link_analysis": {
+          "total_links": 0,
+          "internal_links": 0,
+          "external_links": 0,
+          "broken_links": 0,
+          "broken_links_list": []
+        },
+        "form_analysis": { "has_login_form": false, "form_count": 0 },
+        "image_count": 0
+      },
+      "performance": { "load_time": 0, "page_size": 0 },
+      "analyzed_at": null,
+      "created_at": "2024-01-03T08:00:00Z",
+      "updated_at": "2024-01-03T08:00:00Z"
+    },
+    {
+      "id": 4,
+      "url": "https://broken-site.com",
+      "title": "Broken Site",
+      "description": "This site is down",
+      "status": "failed",
+      "status_code": 500,
+      "seo_analysis": {
+        "meta_title": "",
+        "meta_description": "",
+        "html_version": "",
+        "heading_tags": {
+          "h1_tags": "",
+          "h2_tags": "",
+          "h3_tags": "",
+          "h4_tags": "",
+          "h5_tags": "",
+          "h6_tags": "",
+          "h1_count": 0,
+          "h2_count": 0,
+          "h3_count": 0,
+          "h4_count": 0,
+          "h5_count": 0,
+          "h6_count": 0
+        },
+        "link_analysis": {
+          "total_links": 0,
+          "internal_links": 0,
+          "external_links": 0,
+          "broken_links": 0,
+          "broken_links_list": []
+        },
+        "form_analysis": { "has_login_form": false, "form_count": 0 },
+        "image_count": 0
+      },
+      "performance": { "load_time": 0, "page_size": 0 },
+      "analyzed_at": "2024-01-04T07:30:00Z",
+      "created_at": "2024-01-04T07:00:00Z",
+      "updated_at": "2024-01-04T07:30:00Z"
+    },
+    {
+      "id": 5,
+      "url": "https://pending-site.com",
+      "title": "Pending Site",
+      "description": "A pending website",
+      "status": "pending",
+      "status_code": 0,
+      "seo_analysis": {
+        "meta_title": "",
+        "meta_description": "",
+        "html_version": "",
+        "heading_tags": {
+          "h1_tags": "",
+          "h2_tags": "",
+          "h3_tags": "",
+          "h4_tags": "",
+          "h5_tags": "",
+          "h6_tags": "",
+          "h1_count": 0,
+          "h2_count": 0,
+          "h3_count": 0,
+          "h4_count": 0,
+          "h5_count": 0,
+          "h6_count": 0
+        },
+        "link_analysis": {
+          "total_links": 0,
+          "internal_links": 0,
+          "external_links": 0,
+          "broken_links": 0,
+          "broken_links_list": []
+        },
+        "form_analysis": { "has_login_form": false, "form_count": 0 },
+        "image_count": 0
+      },
+      "performance": { "load_time": 0, "page_size": 0 },
+      "analyzed_at": null,
+      "created_at": "2024-01-05T06:00:00Z",
+      "updated_at": "2024-01-05T06:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "total_pages": 1
+  }
+}

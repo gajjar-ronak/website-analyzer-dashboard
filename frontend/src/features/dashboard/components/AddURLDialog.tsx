@@ -48,6 +48,7 @@ export const AddURLDialog: React.FC<AddURLDialogProps> = ({ isOpen, onClose, onS
       description='Enter a website URL to start monitoring and analysis'
       size='md'
       closeOnOverlayClick={!createURLMutation.isPending}
+      data-testid='add-url-dialog'
     >
       <AddURLForm
         onSubmit={handleSubmit}

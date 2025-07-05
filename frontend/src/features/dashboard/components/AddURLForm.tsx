@@ -91,9 +91,10 @@ export const AddURLForm: React.FC<AddURLFormProps> = ({
             placeholder='Google'
             className='block w-full py-2 px-2 rounded-md border border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
             disabled={loading}
+            data-testid='title-input'
           />
           {errors.title && (
-            <p className='mt-2 text-sm text-red-600' role='alert'>
+            <p className='mt-2 text-sm text-red-600' role='alert' data-testid='title-error'>
               {errors.title.message}
             </p>
           )}
@@ -128,9 +129,10 @@ export const AddURLForm: React.FC<AddURLFormProps> = ({
             placeholder='https://google.com'
             className='block w-full py-2 px-2 rounded-md border border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
             disabled={loading}
+            data-testid='url-input'
           />
           {errors.url && (
-            <p className='mt-2 text-sm text-red-600' role='alert'>
+            <p className='mt-2 text-sm text-red-600' role='alert' data-testid='url-error'>
               {errors.url.message}
             </p>
           )}
@@ -157,7 +159,13 @@ export const AddURLForm: React.FC<AddURLFormProps> = ({
       {/* Form Actions */}
       <div className='flex items-center justify-end space-x-3 pt-4'>
         {showCancelButton && (
-          <Button type='button' variant='outline' onClick={handleCancel} disabled={loading}>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={handleCancel}
+            disabled={loading}
+            data-testid='cancel-button'
+          >
             Cancel
           </Button>
         )}
@@ -171,7 +179,12 @@ export const AddURLForm: React.FC<AddURLFormProps> = ({
           Reset
         </Button>
 
-        <Button type='submit' loading={loading} disabled={!isValid || loading || !isDirty}>
+        <Button
+          type='submit'
+          loading={loading}
+          disabled={!isValid || loading || !isDirty}
+          data-testid='submit-url-button'
+        >
           {submitText}
         </Button>
       </div>

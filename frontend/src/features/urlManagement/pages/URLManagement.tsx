@@ -217,12 +217,15 @@ const URLManagement: React.FC = () => {
   return (
     <>
       {/* Header with Title and Actions */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
+      <div
+        className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'
+        data-testid='url-management-header'
+      >
         <div className='min-w-0 flex-1 mb-4'>
           <h1 className='text-base font-semibold text-gray-900 sm:text-lg'>URL Management</h1>
           <p className='mt-0.5 text-[13px] text-gray-600'>Monitor and manage your website URLs</p>
           {selectedURLIds.length > 0 && (
-            <p className='mt-0.5 text-[11px] text-blue-600'>
+            <p className='mt-0.5 text-[11px] text-blue-600' data-testid='selection-counter'>
               {selectedURLIds.length} URL{selectedURLIds.length !== 1 ? 's' : ''} selected
             </p>
           )}
@@ -243,6 +246,7 @@ const URLManagement: React.FC = () => {
                 bulkImportMutation.isPending
               }
               className='flex items-center space-x-1 px-2 py-1 text-[11px] h-7'
+              data-testid='bulk-import-button'
             >
               {bulkImportMutation.isPending ? (
                 <>
@@ -273,6 +277,7 @@ const URLManagement: React.FC = () => {
                   bulkImportMutation.isPending
                 }
                 className='flex items-center space-x-1 px-2 py-1 text-blue-600 border-blue-300 hover:bg-blue-50 text-[11px] h-7'
+                data-testid='bulk-analyze-button'
               >
                 {bulkAnalyzeMutation.isPending ? (
                   <>
@@ -299,6 +304,7 @@ const URLManagement: React.FC = () => {
                   bulkImportMutation.isPending
                 }
                 className='flex items-center space-x-1 px-2 py-1 text-red-600 border-red-300 hover:bg-red-50 text-[11px] h-7'
+                data-testid='bulk-delete-button'
               >
                 {bulkDeleteMutation.isPending ? (
                   <>
@@ -321,6 +327,7 @@ const URLManagement: React.FC = () => {
               onClick={() => setShowAddDialog(true)}
               size='sm'
               className='inline-flex items-center text-[11px] h-8'
+              data-testid='add-url-button'
             >
               <PlusIcon className='h-4 w-3' />
               Add URL
@@ -337,7 +344,10 @@ const URLManagement: React.FC = () => {
       />
 
       {/* Filters */}
-      <div className='bg-white shadow-sm rounded-md border border-gray-200 mb-4'>
+      <div
+        className='bg-white shadow-sm rounded-md border border-gray-200 mb-4'
+        data-testid='url-filters'
+      >
         <div className='px-3 py-3 sm:px-4 sm:py-4'>
           <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
             {/* Search */}
@@ -347,7 +357,10 @@ const URLManagement: React.FC = () => {
               </label>
               <div className='relative'>
                 <div className='absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none'>
-                  <MagnifyingGlassIcon className='h-3.5 w-3.5 text-gray-400' />
+                  <MagnifyingGlassIcon
+                    className='h-3.5 w-3.5 text-gray-400'
+                    data-testid='search-icon'
+                  />
                 </div>
                 <input
                   type='text'
@@ -356,6 +369,7 @@ const URLManagement: React.FC = () => {
                   onChange={handleSearchChange}
                   className='block w-full pl-8 pr-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors'
                   placeholder='Search URLs or titles...'
+                  data-testid='search-input'
                 />
               </div>
             </div>
@@ -369,6 +383,7 @@ const URLManagement: React.FC = () => {
                 options={statusOptions}
                 size='md'
                 className='max-w-[180px] text-xs h-[44px]'
+                data-testid='status-filter'
               />
             </div>
           </div>

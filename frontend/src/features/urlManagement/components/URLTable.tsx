@@ -103,7 +103,7 @@ const URLTable: React.FC<URLTableProps> = ({
   };
   if (loading) {
     return (
-      <div className='animate-pulse'>
+      <div className='animate-pulse' data-testid='loading-spinner'>
         <div className='bg-white shadow rounded-lg'>
           <div className='px-4 py-5 sm:p-6'>
             <div className='space-y-4'>
@@ -124,7 +124,7 @@ const URLTable: React.FC<URLTableProps> = ({
 
   if (urls.length === 0) {
     return (
-      <div className='bg-white shadow rounded-lg'>
+      <div className='bg-white shadow rounded-lg' data-testid='empty-state'>
         <div className='px-4 py-12 text-center'>
           <div className='mx-auto h-12 w-12 text-gray-400'>
             <svg fill='none' viewBox='0 0 24 24' stroke='currentColor'>
@@ -136,8 +136,8 @@ const URLTable: React.FC<URLTableProps> = ({
               />
             </svg>
           </div>
-          <h3 className='mt-2 text-sm font-medium text-gray-900'>No URLs</h3>
-          <p className='mt-1 text-sm text-gray-500'>
+          <h3 className='mt-2 text-sm font-medium text-gray-900'>No URLs found</h3>
+          <p className='mt-1 text-sm text-gray-500' data-testid='empty-state-description'>
             Get started by adding your first URL to monitor.
           </p>
         </div>
@@ -146,9 +146,9 @@ const URLTable: React.FC<URLTableProps> = ({
   }
 
   return (
-    <div className='bg-white shadow rounded-lg overflow-hidden'>
+    <div className='bg-white shadow rounded-lg overflow-hidden' data-testid='url-table-container'>
       <div className='overflow-x-auto'>
-        <table className='min-w-full divide-y divide-gray-200 text-xs'>
+        <table className='min-w-full divide-y divide-gray-200 text-xs' data-testid='url-table'>
           <thead className='bg-gray-50'>
             <tr>
               <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
@@ -160,29 +160,41 @@ const URLTable: React.FC<URLTableProps> = ({
                     if (input) input.indeterminate = someSelected;
                   }}
                   onChange={e => onSelectAll?.(e.target.checked)}
+                  data-testid='select-all-checkbox'
                 />
               </th>
               <th
                 className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
                 onClick={() => handleSort('title')}
+                data-testid='table-header'
               >
                 <div className='flex items-center space-x-1'>
                   <span>URL</span>
                   {getSortIcons('title')}
                 </div>
               </th>
-              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'
+                data-testid='table-header'
+              >
                 HTML Version
               </th>
-              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'
+                data-testid='table-header'
+              >
                 Internal Links
               </th>
-              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'
+                data-testid='table-header'
+              >
                 External Links
               </th>
               <th
                 className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 text-[12px]'
                 onClick={() => handleSort('status')}
+                data-testid='table-header'
               >
                 <div className='flex items-center space-x-1'>
                   <span>Status</span>
@@ -198,20 +210,24 @@ const URLTable: React.FC<URLTableProps> = ({
                   {getSortIcons('analyzed_at')}
                 </div>
               </th> */}
-              <th className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'>
+              <th
+                className='px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider text-[12px]'
+                data-testid='table-header'
+              >
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className='bg-white divide-y divide-gray-200 text-xs'>
             {urls.map(url => (
-              <tr key={url.id} className='hover:bg-gray-50'>
+              <tr key={url.id} className='hover:bg-gray-50' data-testid='url-row'>
                 <td className='px-2 py-2 whitespace-nowrap'>
                   <input
                     type='checkbox'
                     className='h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
                     checked={selectedIds.includes(url.id)}
                     onChange={e => onSelectUrl?.(url.id, e.target.checked)}
+                    data-testid='url-checkbox'
                   />
                 </td>
                 <td className='px-2 py-2'>
@@ -219,10 +235,13 @@ const URLTable: React.FC<URLTableProps> = ({
                     <button
                       onClick={() => onView?.(url)}
                       className='text-xs font-medium text-blue-600 hover:text-blue-800 truncate max-w-xs text-left'
+                      data-testid='url-title'
                     >
                       {url.title}
                     </button>
-                    <div className='text-xs text-gray-500 truncate max-w-xs'>{url.url}</div>
+                    <div className='text-xs text-gray-500 truncate max-w-xs' data-testid='url-link'>
+                      {url.url}
+                    </div>
                     {url.description && (
                       <div className='text-[10px] text-gray-400 truncate max-w-xs mt-0.5'>
                         {url.description}
@@ -230,19 +249,30 @@ const URLTable: React.FC<URLTableProps> = ({
                     )}
                   </div>
                 </td>
-                <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
+                <td
+                  className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'
+                  data-testid='html-version'
+                >
                   {url.seo_analysis?.html_version || '-'}
                 </td>
-                <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
+                <td
+                  className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'
+                  data-testid='internal-links'
+                >
                   {url.seo_analysis?.link_analysis?.internal_links || 0}
                 </td>
-                <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'>
+                <td
+                  className='px-2 py-2 whitespace-nowrap text-xs text-gray-900'
+                  data-testid='external-links'
+                >
                   {url.seo_analysis?.link_analysis?.external_links || 0}
                 </td>
-                <td className='px-2 py-2 whitespace-nowrap'>
+                <td className='px-2 py-2 whitespace-nowrap' data-testid='url-status'>
                   <div className='flex items-center'>
                     {getStatusIcon(url.status)}
-                    <div className='ml-2'>{getStatusBadge(url.status)}</div>
+                    <div className='ml-2' data-testid='status-badge'>
+                      {getStatusBadge(url.status)}
+                    </div>
                   </div>
                 </td>
                 {/* <td className='px-2 py-2 whitespace-nowrap text-xs text-gray-500'>
@@ -259,16 +289,6 @@ const URLTable: React.FC<URLTableProps> = ({
                 </td> */}
                 <td className='px-2 py-2 whitespace-nowrap text-xs font-medium'>
                   <div className='flex items-center space-x-1'>
-                    {onEdit && (
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => onEdit(url)}
-                        className='text-gray-400 hover:text-gray-600'
-                      >
-                        <PencilIcon className='h-4 w-4' />
-                      </Button>
-                    )}
                     {onCheck && (
                       <Button
                         variant='ghost'
@@ -276,6 +296,7 @@ const URLTable: React.FC<URLTableProps> = ({
                         onClick={() => onCheck(url)}
                         disabled={analyzingIds.includes(url.id) || url.status === 'analyzing'}
                         className='text-blue-400 hover:text-blue-600 disabled:opacity-50'
+                        data-testid='analyze-url-button'
                       >
                         {analyzingIds.includes(url.id) || url.status === 'analyzing' ? (
                           <div className='flex items-center space-x-1'>
@@ -292,6 +313,7 @@ const URLTable: React.FC<URLTableProps> = ({
                         size='sm'
                         onClick={() => onDelete(url)}
                         className='text-red-400 hover:text-red-600'
+                        data-testid='delete-url-button'
                       >
                         <TrashIcon className='h-4 w-4' />
                       </Button>

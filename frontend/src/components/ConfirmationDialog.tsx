@@ -18,6 +18,7 @@ interface ConfirmationDialogProps {
   cancelText?: string;
   confirmVariant?: 'default' | 'destructive';
   loading?: boolean;
+  'data-testid'?: string;
 }
 
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
@@ -30,6 +31,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   cancelText = 'Cancel',
   confirmVariant = 'destructive',
   loading = false,
+  'data-testid': dataTestId = 'confirmation-dialog',
 }) => {
   const handleConfirm = () => {
     onConfirm();
@@ -42,21 +44,36 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       title={title}
       size='sm'
       closeOnOverlayClick={!loading}
+      data-testid={dataTestId}
     >
       <div className='flex items-start space-x-4'>
         <div className='flex-shrink-0'>
           <ExclamationTriangleIcon className='h-6 w-6 text-red-600' />
         </div>
         <div className='flex-1'>
-          <p className='text-sm text-gray-700'>{message}</p>
+          <p className='text-sm text-gray-700' data-testid='dialog-message'>
+            {message}
+          </p>
         </div>
       </div>
 
       <div className='mt-6 flex justify-end space-x-3'>
-        <Button variant='outline' size='sm' onClick={onClose} disabled={loading}>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={onClose}
+          disabled={loading}
+          data-testid='cancel-button'
+        >
           {cancelText}
         </Button>
-        <Button variant={confirmVariant} size='sm' onClick={handleConfirm} disabled={loading}>
+        <Button
+          variant={confirmVariant}
+          size='sm'
+          onClick={handleConfirm}
+          disabled={loading}
+          data-testid='confirm-button'
+        >
           {loading ? 'Processing...' : confirmText}
         </Button>
       </div>

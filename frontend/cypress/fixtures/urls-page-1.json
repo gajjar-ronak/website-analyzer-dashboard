@@ -1,0 +1,36 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "url": "https://page1-url1.com",
+      "title": "Page 1 URL 1",
+      "status": "completed",
+      "html_version": "HTML5",
+      "internal_links": 15,
+      "external_links": 8,
+      "performance_score": 85,
+      "accessibility_score": 92,
+      "seo_score": 78,
+      "created_at": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "url": "https://page1-url2.com",
+      "title": "Page 1 URL 2",
+      "status": "completed",
+      "html_version": "HTML5",
+      "internal_links": 25,
+      "external_links": 12,
+      "performance_score": 95,
+      "accessibility_score": 88,
+      "seo_score": 90,
+      "created_at": "2024-01-02T09:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 2,
+    "total": 4,
+    "total_pages": 2
+  }
+}

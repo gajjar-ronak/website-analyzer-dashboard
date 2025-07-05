@@ -19,6 +19,7 @@ interface SelectProps {
   label?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  'data-testid'?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -31,6 +32,7 @@ const Select: React.FC<SelectProps> = ({
   label,
   className,
   size = 'md',
+  'data-testid': dataTestId,
 }) => {
   const selectedOption = options.find(option => option.value === value);
 
@@ -59,6 +61,7 @@ const Select: React.FC<SelectProps> = ({
               error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300',
               disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'hover:border-gray-400'
             )}
+            data-testid={dataTestId}
           >
             <span className='block truncate'>
               {selectedOption ? selectedOption.label : placeholder}
@@ -90,6 +93,7 @@ const Select: React.FC<SelectProps> = ({
                   }
                   value={option.value}
                   disabled={option.disabled}
+                  data-testid='status-option'
                 >
                   {({ selected }) => (
                     <>

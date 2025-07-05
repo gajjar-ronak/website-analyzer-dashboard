@@ -14,6 +14,11 @@
     "test:coverage": "vitest run --coverage",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
+    "cypress:run:chrome": "cypress run --browser chrome",
+    "cypress:run:firefox": "cypress run --browser firefox",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:e2e:url-management": "cypress run --spec 'cypress/e2e/url-management/**/*'",
     "preview": "vite preview",
     "prepare": "husky"
   },

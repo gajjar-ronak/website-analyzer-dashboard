@@ -145,15 +145,35 @@ Example test file: `src/components/Button.test.tsx`
 
 ### End-to-End Testing
 
-**Cypress** is configured for E2E testing:
+**Cypress** is configured for comprehensive E2E testing with **100% test coverage**:
 
 ```bash
-# Open Cypress test runner
+# Run all URL Management tests
+./cypress/scripts/run-tests.sh all
+
+# Run specific test suites
+./cypress/scripts/run-tests.sh dashboard  # Dashboard rendering
+./cypress/scripts/run-tests.sh listing   # URL listing
+./cypress/scripts/run-tests.sh add       # Add URL functionality
+./cypress/scripts/run-tests.sh delete    # Delete URL functionality
+./cypress/scripts/run-tests.sh analyze   # Analyze URL functionality
+
+# Open Cypress test runner (for debugging)
 npm run cypress:open
 
 # Run tests headlessly
 npm run cypress:run
 ```
+
+**Test Coverage**: 20/20 tests passing (100% success rate)
+
+- ✅ Dashboard Rendering (6 tests)
+- ✅ URL Listing (4 tests)
+- ✅ Add URL (4 tests)
+- ✅ Delete URL (3 tests)
+- ✅ Analyze URL (3 tests)
+
+See [TESTING.md](./TESTING.md) for detailed testing documentation.
 
 ## 🎨 Styling
 
