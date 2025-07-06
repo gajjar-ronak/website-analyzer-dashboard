@@ -60,9 +60,9 @@ website-analyzer-dashboard/
 
 ### Prerequisites
 
-- **Node.js** (v18 or higher)
-- **Go** (v1.21 or higher)
-- **MySQL** (v8.0 or higher)
+- **Node.js** (v22.16.0)
+- **Go** (v1.24.4)
+- **MySQL** (v9.3.0)
 
 ### Backend Setup
 
@@ -79,7 +79,7 @@ go run cmd/main.go
 
 ```bash
 cd frontend
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 
