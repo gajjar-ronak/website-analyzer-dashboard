@@ -75,7 +75,7 @@ src/
 
 ### Prerequisites
 
-- **Node.js** (v18 or higher)
+- **Node.js** (v22.16.0)
 - **npm** (v8 or higher)
 
 ### Installation
@@ -90,7 +90,7 @@ src/
 2. **Install dependencies**
 
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
 
 3. **Start the development server**
